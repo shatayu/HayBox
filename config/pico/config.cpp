@@ -79,6 +79,10 @@ void setup() {
     gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
     gpio_put(PICO_DEFAULT_LED_PIN, 1);
 
+    // Debug output for timing stuff on gp1
+    gpio_init(1);
+    gpio_set_dir(1, GPIO_OUT);
+
     // Create array of input sources to be used.
     static InputSource *input_sources[] = { gpio_input };
     size_t input_source_count = sizeof(input_sources) / sizeof(InputSource *);

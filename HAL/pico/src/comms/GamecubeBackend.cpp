@@ -5,6 +5,7 @@
 #include <GamecubeConsole.hpp>
 #include <hardware/pio.h>
 #include <hardware/timer.h>
+#include <hardware/gpio.h>
 
 GamecubeBackend::GamecubeBackend(
     InputSource **input_sources,
@@ -25,8 +26,9 @@ GamecubeBackend::~GamecubeBackend() {
 
 void GamecubeBackend::SendReport() {
     // Update slower inputs before we start waiting for poll.
-    ScanInputs(InputScanSpeed::SLOW);
-    ScanInputs(InputScanSpeed::MEDIUM);
+    //ScanInputs(InputScanSpeed::SLOW);
+    //ScanInputs(InputScanSpeed::MEDIUM);
+    //This fork won't support slower inputs
 
     // Read inputs
     _gamecube->WaitForPollStart();
@@ -35,6 +37,7 @@ void GamecubeBackend::SendReport() {
     // But wait 40us first so that we read inputs at the start of the 3rd byte of the poll command
     // not the second, so inputs are maximum 40us old by the time we start sending the report.
     busy_wait_us(40);
+    gpio_put(1, 1);
     ScanInputs(InputScanSpeed::FAST);
 
     // Run gamemode logic.
@@ -61,6 +64,7 @@ void GamecubeBackend::SendReport() {
     _report.cstick_y = _outputs.rightStickY;
     _report.l_analog = _outputs.triggerLAnalog;
     _report.r_analog = _outputs.triggerRAnalog;
+    gpio_put(1, 0);
 
     // Send outputs to console unless poll command is invalid.
     if (_gamecube->WaitForPollEnd() != PollStatus::ERROR) {
