@@ -92,6 +92,6 @@ if(detect) {
         //APPLY NERFS HERE when transferring data into output structure
     }
     if(loopTime > minLoop+(minLoop >> 1)) {//if the loop time is 50% longer than expected
-        detect = true;//stop scanning inputs briefly and
+        detect = true;//stop scanning inputs briefly and re-measure timings
     }
 }
