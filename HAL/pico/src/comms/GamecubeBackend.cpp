@@ -30,41 +30,94 @@ void GamecubeBackend::SendReport() {
     //ScanInputs(InputScanSpeed::MEDIUM);
     //This fork won't support slower inputs
 
-    // Read inputs
+    static uint minLoop = 16384;
+    static uint loopCount = 0;
+    static bool detect = true;//false means run
+    static uint sampleCount = 1;
+    static uint sampleSpacing = 0;
+    static uint oldSampleTime = 0;
+    static uint newSampleTime = 0;
+    static uint loopTime = 0;
+    //static uint fastestLoop = 900; //fastest possible loop; platform-dependent
+    static uint fastestLoop = 450; //fastest possible loop; platform-dependent
+
+    oldSampleTime = newSampleTime;
+    newSampleTime = micros();
+    loopTime = newSampleTime - oldSampleTime;
+
+    if(detect) {
+        //run loop time detection procedure
+        gpio_put(1, loopCount%2 == 0);
+        loopCount++;
+        if(loopTime > 300) {//screen out implausibly fast samples; the limit is 2500 Hz (400 us)
+            minLoop = min(minLoop, loopTime);
+        }
+        if(loopCount >= 100) {
+            detect = false;
+            while(1000*sampleCount <= minLoop) {//we want [sampleCount] ms-spaced samples within the smallest possible loop
+                sampleCount++;
+            }
+            sampleSpacing = minLoop / sampleCount;
+            if(sampleSpacing < fastestLoop && sampleCount > 1) {
+                sampleCount--;
+                sampleSpacing = minLoop / sampleCount;
+            }
+        }
+    } else {
+        //run the delay procedure based on samplespacing
+        //in the stock arduino software, it samples 850 us after the end of the poll response
+        //we want the last sample to begin [850 + extra computation time] before the beginning of the last poll to give room for the sample and the travel time+nerf computation
+        //
+        for (int i = 0; i < sampleCount; i++) {
+            gpio_put(1, 0);
+
+            const int computationTime = 250;//us; depends on the platform.
+            const int targetTime = ((i+1)*sampleSpacing)-computationTime;
+            const int newNewSampleTime = micros();
+            int count = 0;
+            while(micros() - newSampleTime < targetTime) {
+            //while(micros() - newNewSampleTime < sampleSpacing) {
+                count++;//do something?
+                //spinlock
+            }
+            gpio_put(1, count>0);
+            ScanInputs(InputScanSpeed::FAST);
+
+            // Run gamemode logic.
+            UpdateOutputs();
+
+            //Log latest raw outputs in a rolling buffer (how long?)
+            //APPLY NERFS HERE when transferring data into output structure
+
+            // Digital outputs
+            _report.a = _outputs.a;
+            _report.b = _outputs.b;
+            _report.x = _outputs.x;
+            _report.y = _outputs.y;
+            _report.z = _outputs.buttonR;
+            _report.l = _outputs.triggerLDigital;
+            _report.r = _outputs.triggerRDigital;
+            _report.start = _outputs.start;
+            _report.dpad_left = _outputs.dpadLeft | _outputs.select;
+            _report.dpad_right = _outputs.dpadRight | _outputs.home;
+            _report.dpad_down = _outputs.dpadDown;
+            _report.dpad_up = _outputs.dpadUp;
+
+            // Analog outputs
+            _report.stick_x = _outputs.leftStickX;
+            _report.stick_y = _outputs.leftStickY;
+            _report.cstick_x = _outputs.rightStickX;
+            _report.cstick_y = _outputs.rightStickY;
+            _report.l_analog = _outputs.triggerLAnalog;
+            _report.r_analog = _outputs.triggerRAnalog;
+        }
+        //if(loopTime > minLoop+(minLoop >> 1)) {//if the loop time is 50% longer than expected
+        //    detect = true;//stop scanning inputs briefly and re-measure timings
+        //}
+    }
+
     _gamecube->WaitForPollStart();
-
-    // Update fast inputs in response to poll.
-    // But wait 40us first so that we read inputs at the start of the 3rd byte of the poll command
-    // not the second, so inputs are maximum 40us old by the time we start sending the report.
-    busy_wait_us(40);
     gpio_put(1, 1);
-    ScanInputs(InputScanSpeed::FAST);
-
-    // Run gamemode logic.
-    UpdateOutputs();
-
-    // Digital outputs
-    _report.a = _outputs.a;
-    _report.b = _outputs.b;
-    _report.x = _outputs.x;
-    _report.y = _outputs.y;
-    _report.z = _outputs.buttonR;
-    _report.l = _outputs.triggerLDigital;
-    _report.r = _outputs.triggerRDigital;
-    _report.start = _outputs.start;
-    _report.dpad_left = _outputs.dpadLeft | _outputs.select;
-    _report.dpad_right = _outputs.dpadRight | _outputs.home;
-    _report.dpad_down = _outputs.dpadDown;
-    _report.dpad_up = _outputs.dpadUp;
-
-    // Analog outputs
-    _report.stick_x = _outputs.leftStickX;
-    _report.stick_y = _outputs.leftStickY;
-    _report.cstick_x = _outputs.rightStickX;
-    _report.cstick_y = _outputs.rightStickY;
-    _report.l_analog = _outputs.triggerLAnalog;
-    _report.r_analog = _outputs.triggerRAnalog;
-    gpio_put(1, 0);
 
     // Send outputs to console unless poll command is invalid.
     if (_gamecube->WaitForPollEnd() != PollStatus::ERROR) {
