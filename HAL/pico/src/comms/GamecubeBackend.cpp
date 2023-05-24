@@ -30,18 +30,20 @@ void GamecubeBackend::SendReport() {
     //ScanInputs(InputScanSpeed::MEDIUM);
     //This fork won't support slower inputs
 
-    static uint minLoop = 16384;
+    static uint32_t minLoop = 16384;
     static uint loopCount = 0;
     static bool detect = true;//false means run
     static uint sampleCount = 1;
-    static uint sampleSpacing = 0;
-    static uint oldSampleTime = 0;
-    static uint newSampleTime = 0;
-    static uint loopTime = 0;
+    static uint32_t sampleSpacing = 0;
+    static uint32_t oldSampleTime = 0;
+    static uint32_t newSampleTime = 0;
+    static uint32_t loopTime = 0;
     //static uint fastestLoop = 900; //fastest possible loop; platform-dependent
     static uint fastestLoop = 450; //fastest possible loop; platform-dependent
 
     oldSampleTime = newSampleTime;
+    //YOU CANNOT USE MICROS
+    //You need to manually use the low level timers
     newSampleTime = micros();
     loopTime = newSampleTime - oldSampleTime;
 
@@ -54,6 +56,7 @@ void GamecubeBackend::SendReport() {
         }
         if(loopCount >= 100) {
             detect = false;
+            sampleCount = 1;
             while(1000*sampleCount <= minLoop) {//we want [sampleCount] ms-spaced samples within the smallest possible loop
                 sampleCount++;
             }
@@ -68,12 +71,12 @@ void GamecubeBackend::SendReport() {
         //in the stock arduino software, it samples 850 us after the end of the poll response
         //we want the last sample to begin [850 + extra computation time] before the beginning of the last poll to give room for the sample and the travel time+nerf computation
         //
-        for (int i = 0; i < sampleCount; i++) {
+        for (uint i = 0; i < sampleCount; i++) {
             gpio_put(1, 0);
 
             const int computationTime = 250;//us; depends on the platform.
-            const int targetTime = ((i+1)*sampleSpacing)-computationTime;
-            const int newNewSampleTime = micros();
+            const uint32_t targetTime = ((i+1)*sampleSpacing)-computationTime;
+            //const int newNewSampleTime = micros();
             int count = 0;
             while(micros() - newSampleTime < targetTime) {
             //while(micros() - newNewSampleTime < sampleSpacing) {
