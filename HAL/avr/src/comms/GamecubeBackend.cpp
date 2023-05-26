@@ -5,6 +5,26 @@
 
 #include <Nintendo.h>
 
+void zeroTcnt1() {
+    //Disable interrupts
+    noInterrupts();
+    //Set TCNT1
+    TCNT1 = 0;
+    //Restore interrupts
+    interrupts();
+}
+
+uint16_t readTcnt1() {
+    //Disable interrupts
+    noInterrupts();
+    //Set TCNT1
+    uint16_t i;
+    i = TCNT1;
+    //Restore interrupts
+    interrupts();
+    return i;
+}
+
 GamecubeBackend::GamecubeBackend(
     InputSource **input_sources,
     size_t input_source_count,
@@ -23,6 +43,16 @@ GamecubeBackend::GamecubeBackend(
         // If polling rate is set to 0, disable the delay.
         _delay = 0;
     }
+
+    //Serial.begin(115200);
+    //Serial.println("Testing serial output");
+    //debug output for timing experiments
+    pinMode(21, OUTPUT);
+
+    //Set up hardware timer
+    TCCR1A = 0;
+    TCCR1B = (1 << CS11) | (1 << CS10);//64 clock divider -> 4 microsecond resolution
+    zeroTcnt1();
 }
 
 GamecubeBackend::~GamecubeBackend() {
@@ -36,35 +66,35 @@ void GamecubeBackend::SendReport() {
     static bool detect = true;//false means run
     static uint sampleCount = 1;
     static uint sampleSpacing = 0;
-    static uint32_t oldSampleTime = 0;
-    static uint32_t newSampleTime = 0;
-    static uint32_t loopTime = 0;
-    static uint fastestLoop = 900; //fastest possible loop; platform-dependent
-    //static uint fastestLoop = 450; //fastest possible loop; platform-dependent
+    static uint16_t loopTime = 0;
+    const uint fastestLoop = 950; //fastest possible loop; platform-dependent
+    //const uint fastestLoop = 450; //fastest possible loop; platform-dependent
 
-    oldSampleTime = newSampleTime;
-    newSampleTime = micros();
-    loopTime = newSampleTime - oldSampleTime;
+    //read how long this loop took
+    loopTime = readTcnt1();//each unit is 4 microseconds
+    //zero the counter so that it doesn't overflow
+    zeroTcnt1();
 
     if(detect && status) {
         //run loop time detection procedure
         //digitalWrite(21, loopCount%2 == 0 ? HIGH : LOW);
-        digitalWrite(21, LOW);
+        digitalWrite(21, HIGH);
         loopCount++;
-        if(loopCount > 5 && loopTime > 300) {//screen out implausibly fast samples; the limit is 2500 Hz (400 us), ignore first few polls
+        if(loopCount > 5 && loopTime > 300/4) {//screen out implausibly fast samples; the limit is 2500 Hz (400 us) so we use 300 us as the limit, ignore first few polls
             minLoop = min(minLoop, loopTime);
         }
         if(loopCount >= 100) {
             detect = false;
             sampleCount = 1;
-            while(1000*sampleCount <= minLoop) {//we want [sampleCount] ms-spaced samples within the smallest possible loop
+            while(1000/4*sampleCount <= minLoop) {//we want [sampleCount] ms-spaced samples within the smallest possible loop
                 sampleCount++;
             }
             sampleSpacing = minLoop / sampleCount;
-            if(sampleSpacing < fastestLoop && sampleCount > 1) {
+            if(sampleSpacing < (fastestLoop/4) && sampleCount > 1) {
                 sampleCount--;
                 sampleSpacing = minLoop / sampleCount;
             }
+            /*
             Serial.print("Loop time: ");
             Serial.println(loopTime);
             Serial.print("Fastest Loop: ");
@@ -73,26 +103,40 @@ void GamecubeBackend::SendReport() {
             Serial.println(sampleCount);
             Serial.print("Sample spacing: ");
             Serial.println(sampleSpacing);
+            */
         }
     } else {
+        if(loopTime > minLoop+(minLoop >> 1)) {//if the loop time is 50% longer than expected
+            /*
+            Serial.println("Loop time too long?");
+            Serial.print("Loop time: ");
+            Serial.println(loopTime);
+            Serial.print("TCNT1: ");
+            Serial.println(readTcnt1());
+            zeroTcnt1();
+            Serial.print("TCNT1: ");
+            Serial.println(readTcnt1());
+            */
+            detect = true;//stop scanning inputs briefly and re-measure timings
+            loopCount = 0;
+        }
         //run the delay procedure based on samplespacing
         //in the stock arduino software, it samples 850 us after the end of the poll response
         //we want the last sample to begin [850 + extra computation time] before the beginning of the last poll to give room for the sample and the travel time+nerf computation
         //
         for (uint i = 0; i < sampleCount; i++) {
             //digitalWrite(21, i%2 == 0 ? HIGH : LOW);
+            digitalWrite(21, LOW);
 
-            const int computationTime = 900;//us; depends on the platform.
-            const unsigned long targetTime = ((i*1)*sampleSpacing)-computationTime;
-            //const int newNewSampleTime = micros();
+            const uint16_t computationTime = 700/4;//depends on the platform; 4us steps.
+            //700 microseconds is sufficient with no travel time computation
+            const uint16_t targetTime = ((i+1)*sampleSpacing)-computationTime;
+            //const uint16_t targetTime = i*sampleSpacing;
             int count = 0;
-            /*
-            while(micros() - newSampleTime < targetTime) {
-            //while(micros() - newNewSampleTime < sampleSpacing) {
+            while(readTcnt1() < targetTime) {
                 count++;//do something?
                 //spinlock
             }
-            */
 
             ScanInputs();
 
@@ -123,13 +167,8 @@ void GamecubeBackend::SendReport() {
             _data.report.cyAxis = _outputs.rightStickY;
             _data.report.left = _outputs.triggerLAnalog + 31;
             _data.report.right = _outputs.triggerRAnalog + 31;
-        }
-        if(loopTime > minLoop+(minLoop >> 1)) {//if the loop time is 50% longer than expected
-            Serial.println("Loop time too long?");
-            Serial.print("Loop time:");
-            Serial.println(loopTime);
-            //detect = true;//stop scanning inputs briefly and re-measure timings
-            //loopCount = 0;
+
+            digitalWrite(21, count ? HIGH : LOW);
         }
     }
 

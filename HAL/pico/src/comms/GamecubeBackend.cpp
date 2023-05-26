@@ -38,8 +38,8 @@ void GamecubeBackend::SendReport() {
     static uint32_t oldSampleTime = 0;
     static uint32_t newSampleTime = 0;
     static uint32_t loopTime = 0;
-    //static uint fastestLoop = 900; //fastest possible loop; platform-dependent
-    static uint fastestLoop = 450; //fastest possible loop; platform-dependent
+    //const uint fastestLoop = 950; //fastest possible loop for AVR
+    const uint fastestLoop = 450; //fastest possible loop for rp2040
 
     oldSampleTime = newSampleTime;
     //YOU CANNOT USE MICROS
@@ -51,7 +51,7 @@ void GamecubeBackend::SendReport() {
         //run loop time detection procedure
         gpio_put(1, loopCount%2 == 0);
         loopCount++;
-        if(loopTime > 300) {//screen out implausibly fast samples; the limit is 2500 Hz (400 us)
+        if(loopCount > 5 && loopTime > 300) {//screen out implausibly fast samples; the limit is 2500 Hz (400 us)
             minLoop = min(minLoop, loopTime);
         }
         if(loopCount >= 100) {
@@ -76,14 +76,13 @@ void GamecubeBackend::SendReport() {
 
             const int computationTime = 250;//us; depends on the platform.
             const uint32_t targetTime = ((i+1)*sampleSpacing)-computationTime;
-            //const int newNewSampleTime = micros();
             int count = 0;
             while(micros() - newSampleTime < targetTime) {
-            //while(micros() - newNewSampleTime < sampleSpacing) {
                 count++;//do something?
                 //spinlock
             }
             gpio_put(1, count>0);
+
             ScanInputs(InputScanSpeed::FAST);
 
             // Run gamemode logic.
