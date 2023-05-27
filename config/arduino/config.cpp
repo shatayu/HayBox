@@ -57,11 +57,6 @@ Pinout pinout = {
 };
 
 void setup() {
-    Serial.begin(9600);
-    Serial.println("Testing serial output");
-    //debug output for timing experiments
-    pinMode(21, OUTPUT);
-
     // Create Nunchuk input source - must be done before GPIO input source otherwise it would
     // disable the pullups on the i2c pins.
     NunchukInput *nunchuk = new NunchukInput();
