@@ -1,5 +1,7 @@
 #include "comms/GamecubeBackend.hpp"
 
+#include "modes/MeleeLimits.hpp"
+
 #include "core/ControllerMode.hpp"
 #include "core/InputSource.hpp"
 

@@ -5,7 +5,7 @@
 #define ANALOG_STICK_MAX 208
 
 Melee18Button::Melee18Button(socd::SocdType socd_type, Melee18ButtonOptions options)
-    : ControllerMode(socd_type) {
+    : ControllerMode(MELEE_SOCD) {
     _socd_pair_count = 4;
     _socd_pairs = new socd::SocdPair[_socd_pair_count]{
         socd::SocdPair{&InputState::left,    &InputState::right  },

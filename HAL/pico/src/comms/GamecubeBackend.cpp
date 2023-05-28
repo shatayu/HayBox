@@ -2,6 +2,8 @@
 
 #include "core/InputSource.hpp"
 
+#include "modes/MeleeLimits.hpp"
+
 #include <GamecubeConsole.hpp>
 #include <hardware/pio.h>
 #include <hardware/timer.h>
