@@ -13,6 +13,7 @@ GamecubeBackend::GamecubeBackend(
     InputSource **input_sources,
     size_t input_source_count,
     uint data_pin,
+    bool nerfOn,
     PIO pio,
     int sm,
     int offset
@@ -20,6 +21,7 @@ GamecubeBackend::GamecubeBackend(
     : CommunicationBackend(input_sources, input_source_count) {
     _gamecube = new GamecubeConsole(data_pin, pio, sm, offset);
     _report = default_gc_report;
+    _nerfOn = nerfOn;
 }
 
 GamecubeBackend::~GamecubeBackend() {
@@ -76,7 +78,8 @@ void GamecubeBackend::SendReport() {
         for (uint i = 0; i < sampleCount; i++) {
             gpio_put(1, 0);
 
-            const int computationTime = 250;//us; depends on the platform.
+            const int nerfTime = 0;
+            const int computationTime = 250 + nerfTime*_nerfOn;//us; depends on the platform.
             const uint32_t targetTime = ((i+1)*sampleSpacing)-computationTime;
             int count = 0;
             while(micros() - newSampleTime < targetTime) {

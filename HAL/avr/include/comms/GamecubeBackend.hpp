@@ -21,6 +21,7 @@ class GamecubeBackend : public CommunicationBackend {
     CGamecubeConsole *_gamecube;
     Gamecube_Data_t _data;
     int _delay;
+    bool _nerfOn;
 };
 
 #endif

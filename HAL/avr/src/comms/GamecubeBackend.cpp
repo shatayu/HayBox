@@ -41,10 +41,15 @@ GamecubeBackend::GamecubeBackend(
         // Delay used between input updates to postpone them until right before the
         // next poll, while also leaving time (850us) for processing to finish.
         _delay = 0;//(1000000 / polling_rate) - 850;
+        _nerfOn = true;
     } else {
-        // If polling rate is set to 0, disable the delay.
+        // If polling rate is set to 0 (A was held), disable ~~the delay~~ the nerfs.
         _delay = 0;
+        _nerfOn = false;
     }
+
+    //check button hold for disabling nerf
+    Scaninputs();
 
     //Serial.begin(115200);
     //Serial.println("Testing serial output");
@@ -130,7 +135,8 @@ void GamecubeBackend::SendReport() {
             //digitalWrite(21, i%2 == 0 ? HIGH : LOW);
             digitalWrite(21, LOW);
 
-            const uint16_t computationTime = 700/4;//depends on the platform; 4us steps.
+            const uint16_t nerfTime = 0/4;
+            const uint16_t computationTime = 700/4 + nerfTime*_nerfOn;//depends on the platform; 4us steps.
             //700 microseconds is sufficient with no travel time computation
             const uint16_t targetTime = ((i+1)*sampleSpacing)-computationTime;
             //const uint16_t targetTime = i*sampleSpacing;

@@ -101,8 +101,13 @@ void setup() {
         }
     } else {
         if (console == ConnectedConsole::GAMECUBE) {
-            primary_backend =
-                new GamecubeBackend(input_sources, input_source_count, pinout.joybus_data);
+            if(button_holds.a) {//disable nerfs on holding A
+                primary_backend =
+                    new GamecubeBackend(input_sources, input_source_count, pinout.joybus_data, false);
+            } else {
+                primary_backend =
+                    new GamecubeBackend(input_sources, input_source_count, pinout.joybus_data, true);
+            }
         } else if (console == ConnectedConsole::N64) {
             primary_backend = new N64Backend(input_sources, input_source_count, pinout.joybus_data);
         }
