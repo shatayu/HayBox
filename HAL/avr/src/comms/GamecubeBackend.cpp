@@ -151,30 +151,31 @@ void GamecubeBackend::SendReport() {
             // Run gamemode logic.
             UpdateOutputs();
 
-            //Log latest raw outputs in a rolling buffer (how long?)
-            //APPLY NERFS HERE when transferring data into output structure
+            if(_nerfOn) {
+                //APPLY NERFS HERE
+            } else {
+                // Digital outputs
+                _data.report.a = _outputs.a;
+                _data.report.b = _outputs.b;
+                _data.report.x = _outputs.x;
+                _data.report.y = _outputs.y;
+                _data.report.z = _outputs.buttonR;
+                _data.report.l = _outputs.triggerLDigital;
+                _data.report.r = _outputs.triggerRDigital;
+                _data.report.start = _outputs.start;
+                _data.report.dleft = _outputs.dpadLeft | _outputs.select;
+                _data.report.dright = _outputs.dpadRight | _outputs.home;
+                _data.report.ddown = _outputs.dpadDown;
+                _data.report.dup = _outputs.dpadUp;
 
-            // Digital outputs
-            _data.report.a = _outputs.a;
-            _data.report.b = _outputs.b;
-            _data.report.x = _outputs.x;
-            _data.report.y = _outputs.y;
-            _data.report.z = _outputs.buttonR;
-            _data.report.l = _outputs.triggerLDigital;
-            _data.report.r = _outputs.triggerRDigital;
-            _data.report.start = _outputs.start;
-            _data.report.dleft = _outputs.dpadLeft | _outputs.select;
-            _data.report.dright = _outputs.dpadRight | _outputs.home;
-            _data.report.ddown = _outputs.dpadDown;
-            _data.report.dup = _outputs.dpadUp;
-
-            // Analog outputs
-            _data.report.xAxis = _outputs.leftStickX;
-            _data.report.yAxis = _outputs.leftStickY;
-            _data.report.cxAxis = _outputs.rightStickX;
-            _data.report.cyAxis = _outputs.rightStickY;
-            _data.report.left = _outputs.triggerLAnalog + 31;
-            _data.report.right = _outputs.triggerRAnalog + 31;
+                // Analog outputs
+                _data.report.xAxis = _outputs.leftStickX;
+                _data.report.yAxis = _outputs.leftStickY;
+                _data.report.cxAxis = _outputs.rightStickX;
+                _data.report.cyAxis = _outputs.rightStickY;
+                _data.report.left = _outputs.triggerLAnalog + 31;
+                _data.report.right = _outputs.triggerRAnalog + 31;
+            }
 
             digitalWrite(21, count ? HIGH : LOW);
         }

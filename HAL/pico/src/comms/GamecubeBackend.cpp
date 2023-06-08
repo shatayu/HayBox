@@ -93,34 +93,36 @@ void GamecubeBackend::SendReport() {
             // Run gamemode logic.
             UpdateOutputs();
 
-            //Log latest raw outputs in a rolling buffer (how long?)
-            //APPLY NERFS HERE when transferring data into output structure
+            if(_nerfOn) {
+                //APPLY NERFS HERE
+            } else {
+                // Digital outputs
+                _report.a = _outputs.a;
+                _report.b = _outputs.b;
+                _report.x = _outputs.x;
+                _report.y = _outputs.y;
+                _report.z = _outputs.buttonR;
+                _report.l = _outputs.triggerLDigital;
+                _report.r = _outputs.triggerRDigital;
+                _report.start = _outputs.start;
+                _report.dpad_left = _outputs.dpadLeft | _outputs.select;
+                _report.dpad_right = _outputs.dpadRight | _outputs.home;
+                _report.dpad_down = _outputs.dpadDown;
+                _report.dpad_up = _outputs.dpadUp;
 
-            // Digital outputs
-            _report.a = _outputs.a;
-            _report.b = _outputs.b;
-            _report.x = _outputs.x;
-            _report.y = _outputs.y;
-            _report.z = _outputs.buttonR;
-            _report.l = _outputs.triggerLDigital;
-            _report.r = _outputs.triggerRDigital;
-            _report.start = _outputs.start;
-            _report.dpad_left = _outputs.dpadLeft | _outputs.select;
-            _report.dpad_right = _outputs.dpadRight | _outputs.home;
-            _report.dpad_down = _outputs.dpadDown;
-            _report.dpad_up = _outputs.dpadUp;
-
-            // Analog outputs
-            _report.stick_x = _outputs.leftStickX;
-            _report.stick_y = _outputs.leftStickY;
-            _report.cstick_x = _outputs.rightStickX;
-            _report.cstick_y = _outputs.rightStickY;
-            _report.l_analog = _outputs.triggerLAnalog;
-            _report.r_analog = _outputs.triggerRAnalog;
+                // Analog outputs
+                _report.stick_x = _outputs.leftStickX;
+                _report.stick_y = _outputs.leftStickY;
+                _report.cstick_x = _outputs.rightStickX;
+                _report.cstick_y = _outputs.rightStickY;
+                _report.l_analog = _outputs.triggerLAnalog;
+                _report.r_analog = _outputs.triggerRAnalog;
+            }
         }
-        //if(loopTime > minLoop+(minLoop >> 1)) {//if the loop time is 50% longer than expected
-        //    detect = true;//stop scanning inputs briefly and re-measure timings
-        //}
+        if(loopTime > minLoop+(minLoop >> 1)) {//if the loop time is 50% longer than expected
+            detect = true;//stop scanning inputs briefly and re-measure timings
+            loopCount = 0;
+        }
     }
 
     _gamecube->WaitForPollStart();
