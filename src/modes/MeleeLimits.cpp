@@ -12,7 +12,13 @@
 
 #define TRAVELTIME 6//ms
 #define CROSSTIME 12//ms to cross gate
-#define LONGTIME 18//ms for "easy" to "internal", or for detected SDI
+#define LONGTIME 16//ms for "easy" to "internal", or for detected SDI
+#define SLOWTIME 4*16//ms for SDI nerfing
+
+#define DASHTIME (16*15)//ms; last dash time prior to a pivot input; 15 frames
+#define PIVOTTIME 24//ms; any pivot
+
+#define QCIRCTIME (16*6)//ms; time between first direction
 
 #define HISTORYLEN 32//changes in target stick position
 
@@ -57,6 +63,9 @@ bool isWankSDI(const shortstate coordHistory[HISTORYLEN],
                const uint8_t currentIndex,
                const uint16_t currentIter,
                const uint16_t sampleSpacing) {
+    //detect quarter circling, whether it's from cardinal->diagonal-> opposite diagonal within n frames of first cardinal
+    //or wank, where it's diagonal diagonal diagonal within n frames (same n frames?)
+    //or rapid tapping, where the stick goes from neutral to the same two quadrants within n frames
 }
 
 void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
