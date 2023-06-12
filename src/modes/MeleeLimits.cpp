@@ -73,9 +73,11 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     //  the input is crouching
     //    (make you do a 2f jump input if you input an upward tilt coordinate within 4 frames)
     //  rapid quarter circling (wank di)
-    //    (temporarily increase travel time to... 16 ms?)
+    //    lock out second diagonal (opposite axis). May not be important with neutral SOCD.
     //  rapid tapping (tap di)
-    //    (temporarily increase travel time to... 16 ms?)
+    //    Temporarily increase travel time to... 16 ms? 24ms?
+    //  rapid eighth-circling (cardinal diagonal neutral repeat)
+    //    Increase travel time on cardinal and lock out later diagonals.
 
     static uint16_t currentIter = 0;
     currentIter++;
