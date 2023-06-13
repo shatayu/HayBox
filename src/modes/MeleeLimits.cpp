@@ -111,14 +111,13 @@ uint8_t popcount_zone(const uint8_t bitsIn) {
 
 bool isWankSDI(const shortstate coordHistory[HISTORYLEN],
                const uint8_t currentIndex,
-               const uint16_t currentIter,
+               const uint16_t curTime,
                const uint16_t sampleSpacing) {
     //detect quarter circling, whether it's from cardinal->diagonal-> opposite diagonal within n frames of first cardinal
     //or wank, where it's diagonal diagonal diagonal within n frames (same n frames?)
 
     //is it in a diagonal zone?
     const uint8_t curZone = zone(coordHistory[currentIndex].ax, coordHistory[currentIndex].ay);
-    const uint16_t curTime = coordHistory[currentIndex].timestamp;
 
     uint8_t stepsBack = 1;
     if(popcount_zone(curZone) == 2) {
