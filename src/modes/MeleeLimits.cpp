@@ -98,9 +98,10 @@ uint8_t zone(const uint8_t x, const uint8_t y) {
     return result;
 }
 
-uint8_t popcount(const uint8_t bitsIn) {
+//not a general purpose popcount, this is specifically for zones
+uint8_t popcount_zone(const uint8_t bitsIn) {
     uint8_t count = 0;
-    for(uint8_t i = 0; i < 8; i++) {
+    for(uint8_t i = 0; i < 4; i++) {
         if((bitsIn >> i) & 0b0000'0001) {
             count++;
         }
@@ -120,7 +121,7 @@ bool isWankSDI(const shortstate coordHistory[HISTORYLEN],
     const uint16_t curTime = coordHistory[currentIndex].timestamp;
 
     uint8_t stepsBack = 1;
-    if(popcount(curZone) == 2) {
+    if(popcount_zone(curZone) == 2) {
         //in the past TIMELIMIT_QCIRC has it been to an adjacent diagonal ?
         for(; stepsBack < HISTORYLEN; stepsBack++) {
             const uint8_t testIndex = lookback(currentIndex, stepsBack);
@@ -138,7 +139,7 @@ bool isWankSDI(const shortstate coordHistory[HISTORYLEN],
                 } else {
                     //it shares a direction
                     const uint8_t sharedDirection = prevZone & curZone;
-                    if(prevZone != curZone && popcount(prevZone) == 2) {
+                    if(prevZone != curZone && popcount_zone(prevZone) == 2) {
                         //it was in an adjacent diagonal
                         //now we must check to see if, before that, it was the shared cardinal or the current diagonal, within the same time limit
                         for(; stepsBack < HISTORYLEN; stepsBack++) {
