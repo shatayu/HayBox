@@ -49,7 +49,7 @@ GamecubeBackend::GamecubeBackend(
     }
 
     //check button hold for disabling nerf
-    Scaninputs();
+    ScanInputs();
 
     //Serial.begin(115200);
     //Serial.println("Testing serial output");
