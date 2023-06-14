@@ -1,5 +1,7 @@
 #include "modes/MeleeLimits.hpp"
 
+#define HISTORYLEN 32//changes in target stick position
+
 #define ANALOG_STICK_MIN 48
 #define ANALOG_DEAD_MIN (128-22)/*this is in the deadzone*/
 #define ANALOG_STICK_NEUTRAL 128
@@ -19,8 +21,6 @@
 #define TIMELIMIT_PIVOT (24*250)//units of 4us; any pivot
 
 #define TIMELIMIT_QCIRC (16*6*250)//units of 4us; time between first direction
-
-#define HISTORYLEN 32//changes in target stick position
 
 #define BITS_U 0b0000'0001
 #define BITS_D 0b0000'0010
@@ -119,6 +119,10 @@ bool isWankSDI(const shortstate coordHistory[HISTORYLEN],
     //is it in a diagonal zone?
     const uint8_t curZone = zone(coordHistory[currentIndex].ax, coordHistory[currentIndex].ay);
 
+    uint8_t isFalseTrue = 0;
+    const uint8_t falseBits = 0b0000'0010;
+    const uint8_t trueBits = 0b0000'0001;
+
     uint8_t stepsBack = 1;
     if(popcount_zone(curZone) == 2) {
         //in the past TIMELIMIT_QCIRC has it been to an adjacent diagonal ?
@@ -128,13 +132,19 @@ bool isWankSDI(const shortstate coordHistory[HISTORYLEN],
             const uint16_t prevTime = coordHistory[testIndex].timestamp;
             if((curTime-prevTime)*sampleSpacing > TIMELIMIT_QCIRC) {
                 //it's not sdi if it was slow enough
-                return false;
+                //return false;
+                if(!isFalseTrue) {
+                    isFalseTrue = falseBits;
+                }
             } else {
                 //it's fast enough
                 if(!(prevZone & curZone)) {
                     //it's not wank SDI if it shares no directions with the diagonal
                     //this also weeds out neutral, which is handled separately
-                    return false;
+                    //return false;
+                    if(!isFalseTrue) {
+                        isFalseTrue = falseBits;
+                    }
                 } else {
                     //it shares a direction
                     const uint8_t sharedDirection = prevZone & curZone;
@@ -147,17 +157,26 @@ bool isWankSDI(const shortstate coordHistory[HISTORYLEN],
                             const uint16_t prevTime2 = coordHistory[testIndex2].timestamp;
                             if((curTime-prevTime2)*sampleSpacing > TIMELIMIT_QCIRC) {
                                 //it's not sdi if it was slow enough
-                                return false;
+                                //return false;
+                                if(!isFalseTrue) {
+                                    isFalseTrue = falseBits;
+                                }
                             } else {
                                 //it's fast enough
                                 if(!(prevZone2 & sharedDirection)) {
                                     //it's not wank SDI if the previous direction isn't in the same direction as the two diagonals
                                     //this also weeds out neutral, which is handled separately
-                                    return false;
+                                    //return false;
+                                    if(!isFalseTrue) {
+                                        isFalseTrue = falseBits;
+                                    }
                                 } else {
                                     if(prevZone2 != prevZone) {
                                         //it is wank SDI
-                                        return true;
+                                        //return true;
+                                        if(!isFalseTrue) {
+                                            isFalseTrue = trueBits;
+                                        }
                                     }
                                 }
                             }
@@ -169,7 +188,17 @@ bool isWankSDI(const shortstate coordHistory[HISTORYLEN],
     }
     //if it's not currently a diagonal
     //or if it ran out of history somehow
-    return false;
+    //return false
+    /*
+    if(!isFalseTrue) {
+        isFalseTrue = falseBits;
+    }
+    */
+    if(isFalseTrue & trueBits) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
