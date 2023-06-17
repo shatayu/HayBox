@@ -203,10 +203,10 @@ bool isWankSDI(const shortstate coordHistory[HISTORYLEN],
     }
 }
 
-bool isTapSDI(const shortstate coordHistory[HISTORYLEN],
-              const uint8_t currentIndex,
-              const uint16_t curTime,
-              const uint16_t sampleSpacing) {
+bool isCardinalTapSDI(const shortstate coordHistory[HISTORYLEN],
+                      const uint8_t currentIndex,
+                      const uint16_t curTime,
+                      const uint16_t sampleSpacing) {
     //detect repeated center-cardinal sequences
 
     //grab the last four zones
