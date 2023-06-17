@@ -18,9 +18,11 @@
 #define TRAVELTIME_SLOW (4*16)//ms for tap SDI nerfing
 
 #define TIMELIMIT_DASH (16*15*250)//units of 4us; last dash time prior to a pivot input; 15 frames
-#define TIMELIMIT_PIVOT (24*250)//units of 4us; any pivot
+#define TIMELIMIT_PIVOT (24*250)//units of 4us; any longer than 1.5 frames is not likely to be a pivot
 
-#define TIMELIMIT_QCIRC (16*6*250)//units of 4us; time between first direction
+#define TIMELIMIT_QCIRC (16*6*250)//units of 4us; 6 frames
+
+#define TIMELIMIT_TAP (16*6*250)//units of 4us; 6 frames
 
 #define BITS_U 0b0000'0001
 #define BITS_D 0b0000'0010
@@ -116,12 +118,12 @@ bool isWankSDI(const shortstate coordHistory[HISTORYLEN],
     //detect quarter circling, whether it's from cardinal->diagonal-> opposite diagonal within n frames of first cardinal
     //or wank, where it's diagonal diagonal diagonal within n frames (same n frames?)
 
-    //is it in a diagonal zone?
-    const uint8_t curZone = zone(coordHistory[currentIndex].ax, coordHistory[currentIndex].ay);
-
     uint8_t isFalseTrue = 0;
     const uint8_t falseBits = 0b0000'0010;
     const uint8_t trueBits = 0b0000'0001;
+
+    //is it in a diagonal zone?
+    const uint8_t curZone = zone(coordHistory[currentIndex].ax, coordHistory[currentIndex].ay);
 
     uint8_t stepsBack = 1;
     if(popcount_zone(curZone) == 2) {
@@ -196,6 +198,36 @@ bool isWankSDI(const shortstate coordHistory[HISTORYLEN],
     */
     if(isFalseTrue & trueBits) {
         return true;
+    } else {
+        return false;
+    }
+}
+
+bool isTapSDI(const shortstate coordHistory[HISTORYLEN],
+              const uint8_t currentIndex,
+              const uint16_t curTime,
+              const uint16_t sampleSpacing) {
+    //detect repeated center-cardinal sequences
+
+    //grab the last four zones
+    const uint8_t oneIndex = lookback(currentIndex, 1);
+    const uint8_t twoIndex = lookback(currentIndex, 2);
+    const uint8_t thrIndex = lookback(currentIndex, 3);
+    const uint8_t curZone = zone(coordHistory[currentIndex].ax, coordHistory[currentIndex].ay);
+    const uint8_t zoneOne = zone(coordHistory[oneIndex].ax, coordHistory[oneIndex].ay);
+    const uint8_t zoneTwo = zone(coordHistory[twoIndex].ax, coordHistory[twoIndex].ay);
+    const uint8_t zoneThr = zone(coordHistory[thrIndex].ax, coordHistory[thrIndex].ay);
+
+    // if we're changing zones back and forth,                               and one of the pairs of zones is 0
+    if(curZone != zoneOne && (curZone == zoneTwo) && (zoneOne == zoneThr) && ((curZone == 0) || (zoneOne == 0))) {
+        //if the time difference between repeated taps or releases is small enough
+        const uint16_t curTime = coordHistory[currentIndex].timestamp;
+        const uint16_t prevTime = coordHistory[twoIndex].timestamp;
+        if((curTime - prevTime)*sampleSpacing < TIMELIMIT_TAP) {
+            return true;
+        } else {
+            return false;
+        }
     } else {
         return false;
     }
