@@ -213,13 +213,45 @@ bool isCardinalTapSDI(const shortstate coordHistory[HISTORYLEN],
     const uint8_t oneIndex = lookback(currentIndex, 1);
     const uint8_t twoIndex = lookback(currentIndex, 2);
     const uint8_t thrIndex = lookback(currentIndex, 3);
-    const uint8_t curZone = zone(coordHistory[currentIndex].ax, coordHistory[currentIndex].ay);
+    const uint8_t zoneCur = zone(coordHistory[currentIndex].ax, coordHistory[currentIndex].ay);
     const uint8_t zoneOne = zone(coordHistory[oneIndex].ax, coordHistory[oneIndex].ay);
     const uint8_t zoneTwo = zone(coordHistory[twoIndex].ax, coordHistory[twoIndex].ay);
     const uint8_t zoneThr = zone(coordHistory[thrIndex].ax, coordHistory[thrIndex].ay);
 
     // if we're changing zones back and forth,                               and one of the pairs of zones is 0
-    if(curZone != zoneOne && (curZone == zoneTwo) && (zoneOne == zoneThr) && ((curZone == 0) || (zoneOne == 0))) {
+    if(zoneCur != zoneOne && (zoneCur == zoneTwo) && (zoneOne == zoneThr) && ((zoneCur == 0) || (zoneOne == 0))) {
+        //if the time difference between repeated taps or releases is small enough
+        const uint16_t curTime = coordHistory[currentIndex].timestamp;
+        const uint16_t prevTime = coordHistory[twoIndex].timestamp;
+        if((curTime - prevTime)*sampleSpacing < TIMELIMIT_TAP) {
+            return true;
+        } else {
+            return false;
+        }
+    } else {
+        return false;
+    }
+}
+
+bool isDiagonalTapSDI(const shortstate coordHistory[HISTORYLEN],
+                      const uint8_t currentIndex,
+                      const uint16_t curTime,
+                      const uint16_t sampleSpacing) {
+    //detect repeated cardinal-diagonal sequences
+
+    //grab the last four zones
+    const uint8_t oneIndex = lookback(currentIndex, 1);
+    const uint8_t twoIndex = lookback(currentIndex, 2);
+    const uint8_t thrIndex = lookback(currentIndex, 3);
+    const uint8_t zoneCur = zone(coordHistory[currentIndex].ax, coordHistory[currentIndex].ay);
+    const uint8_t zoneOne = zone(coordHistory[oneIndex].ax, coordHistory[oneIndex].ay);
+    const uint8_t zoneTwo = zone(coordHistory[twoIndex].ax, coordHistory[twoIndex].ay);
+    const uint8_t zoneThr = zone(coordHistory[thrIndex].ax, coordHistory[thrIndex].ay);
+    const uint8_t popCur = popcount_zone(zoneCur);
+    const uint8_t popOne = popcount_zone(zoneOne);
+
+    // if we're changing zones back and forth,                               and both of the pairs are nonzero
+    if(zoneCur != zoneOne && (zoneCur == zoneTwo) && (zoneOne == zoneThr) && ((zoneCur != 0) || (zoneOne != 0))) {
         //if the time difference between repeated taps or releases is small enough
         const uint16_t curTime = coordHistory[currentIndex].timestamp;
         const uint16_t prevTime = coordHistory[twoIndex].timestamp;
