@@ -24,10 +24,17 @@
 
 #define TIMELIMIT_TAP (16*6*250)//units of 4us; 6 frames
 
+#define TIMELIMIT_CARDIAG (16*8*250)//units of 4us; 8 frames
+
 #define BITS_U 0b0000'0001
 #define BITS_D 0b0000'0010
 #define BITS_L 0b0000'0100
 #define BITS_R 0b0000'1000
+
+#define BITS_WANK     0b0000'0001
+#define BITS_TAP_CARD 0b0000'0010
+#define BITS_TAP_DIAG 0b0000'0100
+#define BITS_TAP_CRDG 0b0000'1000
 
 typedef struct {
     uint16_t timestamp;//in samples
@@ -36,6 +43,7 @@ typedef struct {
     uint8_t ay;
     uint8_t cx;
     uint8_t cy;
+    uint8_t zone;
     bool apress;
 } shortstate;
 
@@ -111,7 +119,7 @@ uint8_t popcount_zone(const uint8_t bitsIn) {
     return count;
 }
 
-bool isWankSDI(const shortstate coordHistory[HISTORYLEN],
+uint8_t isWankSDI(const shortstate coordHistory[HISTORYLEN],
                const uint8_t currentIndex,
                const uint16_t curTime,
                const uint16_t sampleSpacing) {
@@ -123,14 +131,14 @@ bool isWankSDI(const shortstate coordHistory[HISTORYLEN],
     const uint8_t trueBits = 0b0000'0001;
 
     //is it in a diagonal zone?
-    const uint8_t curZone = zone(coordHistory[currentIndex].ax, coordHistory[currentIndex].ay);
+    const uint8_t curZone = coordHistory[currentIndex].zone;
 
     uint8_t stepsBack = 1;
     if(popcount_zone(curZone) == 2) {
         //in the past TIMELIMIT_QCIRC has it been to an adjacent diagonal ?
         for(; stepsBack < HISTORYLEN; stepsBack++) {
             const uint8_t testIndex = lookback(currentIndex, stepsBack);
-            const uint8_t prevZone = zone(coordHistory[testIndex].ax, coordHistory[testIndex].ay);
+            const uint8_t prevZone = coordHistory[testIndex].zone;
             const uint16_t prevTime = coordHistory[testIndex].timestamp;
             if((curTime-prevTime)*sampleSpacing > TIMELIMIT_QCIRC) {
                 //it's not sdi if it was slow enough
@@ -155,7 +163,7 @@ bool isWankSDI(const shortstate coordHistory[HISTORYLEN],
                         //now we must check to see if, before that, it was the shared cardinal or the current diagonal, within the same time limit
                         for(; stepsBack < HISTORYLEN; stepsBack++) {
                             const uint8_t testIndex2 = lookback(currentIndex, stepsBack);
-                            const uint8_t prevZone2 = zone(coordHistory[testIndex2].ax, coordHistory[testIndex2].ay);
+                            const uint8_t prevZone2 = coordHistory[testIndex2].zone;
                             const uint16_t prevTime2 = coordHistory[testIndex2].timestamp;
                             if((curTime-prevTime2)*sampleSpacing > TIMELIMIT_QCIRC) {
                                 //it's not sdi if it was slow enough
@@ -197,72 +205,76 @@ bool isWankSDI(const shortstate coordHistory[HISTORYLEN],
     }
     */
     if(isFalseTrue & trueBits) {
-        return true;
+        return BITS_WANK;
     } else {
-        return false;
+        return 0;
     }
 }
 
-bool isCardinalTapSDI(const shortstate coordHistory[HISTORYLEN],
-                      const uint8_t currentIndex,
-                      const uint16_t curTime,
-                      const uint16_t sampleSpacing) {
-    //detect repeated center-cardinal sequences
+uint8_t isTapSDI(const shortstate coordHistory[HISTORYLEN],
+                 const uint8_t currentIndex,
+                 const uint16_t curTime,
+                 const uint16_t sampleSpacing) {
+    uint8_t output = 0;
 
-    //grab the last four zones
-    const uint8_t oneIndex = lookback(currentIndex, 1);
-    const uint8_t twoIndex = lookback(currentIndex, 2);
-    const uint8_t thrIndex = lookback(currentIndex, 3);
-    const uint8_t zoneCur = zone(coordHistory[currentIndex].ax, coordHistory[currentIndex].ay);
-    const uint8_t zoneOne = zone(coordHistory[oneIndex].ax, coordHistory[oneIndex].ay);
-    const uint8_t zoneTwo = zone(coordHistory[twoIndex].ax, coordHistory[twoIndex].ay);
-    const uint8_t zoneThr = zone(coordHistory[thrIndex].ax, coordHistory[thrIndex].ay);
+    //grab the last five zones
+    uint8_t zoneList[5];
+    uint16_t timeList[5];
+    for(int i=0; i<5; i++) {
+        const uint8_t index = lookback(currentIndex, i);
+        zoneList[i] = coordHistory[index].zone;
+        timeList[i] = coordHistory[index].timestamp;
+    }
+    const uint8_t popCur = popcount_zone(zoneList[0]);
+    const uint8_t popOne = popcount_zone(zoneList[1]);
 
+    //detect repeated center-cardinal sequences, or repeated cardinal-diagonal sequences
     // if we're changing zones back and forth,                               and one of the pairs of zones is 0
-    if(zoneCur != zoneOne && (zoneCur == zoneTwo) && (zoneOne == zoneThr) && ((zoneCur == 0) || (zoneOne == 0))) {
-        //if the time difference between repeated taps or releases is small enough
-        const uint16_t curTime = coordHistory[currentIndex].timestamp;
-        const uint16_t prevTime = coordHistory[twoIndex].timestamp;
-        if((curTime - prevTime)*sampleSpacing < TIMELIMIT_TAP) {
-            return true;
-        } else {
-            return false;
+    if(zoneList[0] != zoneList[1] && (zoneList[0] == zoneList[2]) && (zoneList[1] == zoneList[3])) {
+        //check the time limit
+        if((timeList[0] - timeList[2])*sampleSpacing < TIMELIMIT_TAP) {
+            if((zoneList[0] == 0) || (zoneList[1] == 0)) {//if one of the pairs of zones is zero, it's tapping a cardinal
+                output = output | BITS_TAP_CARD;
+            } else if(popCur+popOne == 3) { //one is cardinal and the other is diagonal
+                output = output | BITS_TAP_DIAG;
+            }
         }
-    } else {
-        return false;
     }
-}
+    //detect:
+    //         center-cardinal-diagonal-center-cardinal (-diagonal)
+    //center-cardinal-diagonal-cardinal-center-cardinal (-diagonal)
+    //where the cardinals are the same, and the diagonals are the same
 
-bool isDiagonalTapSDI(const shortstate coordHistory[HISTORYLEN],
-                      const uint8_t currentIndex,
-                      const uint16_t curTime,
-                      const uint16_t sampleSpacing) {
-    //detect repeated cardinal-diagonal sequences
-
-    //grab the last four zones
-    const uint8_t oneIndex = lookback(currentIndex, 1);
-    const uint8_t twoIndex = lookback(currentIndex, 2);
-    const uint8_t thrIndex = lookback(currentIndex, 3);
-    const uint8_t zoneCur = zone(coordHistory[currentIndex].ax, coordHistory[currentIndex].ay);
-    const uint8_t zoneOne = zone(coordHistory[oneIndex].ax, coordHistory[oneIndex].ay);
-    const uint8_t zoneTwo = zone(coordHistory[twoIndex].ax, coordHistory[twoIndex].ay);
-    const uint8_t zoneThr = zone(coordHistory[thrIndex].ax, coordHistory[thrIndex].ay);
-    const uint8_t popCur = popcount_zone(zoneCur);
-    const uint8_t popOne = popcount_zone(zoneOne);
-
-    // if we're changing zones back and forth,                               and both of the pairs are nonzero
-    if(zoneCur != zoneOne && (zoneCur == zoneTwo) && (zoneOne == zoneThr) && ((zoneCur != 0) || (zoneOne != 0))) {
-        //if the time difference between repeated taps or releases is small enough
-        const uint16_t curTime = coordHistory[currentIndex].timestamp;
-        const uint16_t prevTime = coordHistory[twoIndex].timestamp;
-        if((curTime - prevTime)*sampleSpacing < TIMELIMIT_TAP) {
-            return true;
+    //simpler: if the last 5 inputs are in the origin, one cardinal, and one diagonal
+    //and that there was a recent return to center
+    //at least one of each zone, no more than 3 zones total
+    uint8_t cardZone = 0b1111'1111;
+    uint8_t diagZone = 0b1111'1111;
+    uint8_t origCount = 0;
+    uint8_t cardCount = 0;
+    uint8_t diagCount = 0;
+    for(int i=0; i < 5; i++) {
+        const uint8_t popcnt = popcount_zone(zoneList[i]);
+        if(popcnt == 0) {
+            origCount++;
+        } else if(popcnt == 1) {
+            cardCount++;
+            cardZone = cardZone & zoneList[i];//if two of these don't match, it'll be zero
         } else {
-            return false;
+            diagCount++;
+            diagZone = diagZone & zoneList[i];//if two of these don't match, it'll have zero or one bits set
         }
-    } else {
-        return false;
     }
+    //check the bit count of diagonal matching
+    const bool diagMatch = popcount_zone(diagZone) == 2;
+    //check whether it returned to center recently
+    const bool recentOrig = (zoneList[1] & zoneList[2]) == 0;
+    //check whether the input was fast enough
+    const bool shortTime = (timeList[0] - timeList[4])*sampleSpacing < TIMELIMIT_CARDIAG;
+    if(cardZone && diagMatch && origCount && cardCount && diagCount && recentOrig && shortTime) {
+        output = output | BITS_TAP_CRDG;
+    }
+    return output;
 }
 
 void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
