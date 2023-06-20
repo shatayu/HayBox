@@ -413,11 +413,19 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
 
     //if it's a pivot uptilt coordinate, make Y jump //TODO
 
-    //if it's a crouch to upward coordinate, make Y jump //TODO
+    //if it's a fast crouch to upward coordinate, make Y jump even if a tilt was desired
     if(aHistory[currentIndexA].y_start < ANALOG_STICK_CROUCH &&//started out in a crouch
        aHistory[currentIndexA].y > ANALOG_DEAD_MAX &&//wanting to go out of the deadzone
-       (aHistory[currentIndexA].timestamp-aHistory[lookback(currentIndexA,1)].timestamp) < TIMELIMIT_DOWNUP &&//the upward input occurred < 3 frames after the previous stick movement
-       (currentTime-aHistory[currentIndexA].timestamp) < JUMP_TIME) {//it's been less than 2 frames since the stick was moved up (this sets the duration of the stick jump input)
+       (aHistory[currentIndexA].timestamp-aHistory[lookback(currentIndexA,1)].timestamp)*sampleSpacing < TIMELIMIT_DOWNUP &&//the upward input occurred < 3 frames after the previous stick movement
+       (currentTime-aHistory[currentIndexA].timestamp)*sampleSpacing < JUMP_TIME) {//it's been less than 2 frames since the stick was moved up (this sets the duration of the stick jump input)
+           prelimAY = 255;
+    }
+    //handle neutral SOCD for the crouch uptilt nerf
+    const uint8_t prevIndexA = lookback(currentIndexA, 1);
+    if(aHistory[prevIndexA].y_start < ANALOG_STICK_CROUCH &&//started out in a crouch
+       aHistory[currentIndexA].y > ANALOG_DEAD_MAX &&//wanting to go out of the deadzone
+       (aHistory[currentIndexA].timestamp-aHistory[prevIndexA].timestamp)*sampleSpacing < TIMELIMIT_DOWNUP &&//the upward input occurred < 3 frames after the previous stick movement
+       (currentTime-aHistory[currentIndexA].timestamp)*sampleSpacing < JUMP_TIME) {//it's been less than 2 frames since the stick was moved up (this sets the duration of the stick jump input)
            prelimAY = 255;
     }
 
