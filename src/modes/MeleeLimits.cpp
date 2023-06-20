@@ -8,6 +8,7 @@
 #define ANALOG_DEAD_MAX (128+22)/*this is in the deadzone*/
 #define ANALOG_STICK_MAX 208
 #define ANALOG_STICK_CROUCH (128-50)/*this y coordinate will hold a crouch*/
+#define ANALOG_STICK_JUMP (128+
 #define ANALOG_DASH_LEFT (128-64)/*this x coordinate will dash left*/
 #define ANALOG_DASH_RIGHT (128+64)/*this x coordinate will dash right*/
 #define MELEE_RIM_RAD2 6185/*if x^2+y^2 >= this, it's on the rim*/
@@ -16,6 +17,9 @@
 #define TRAVELTIME_CROSS 12//ms to cross gate
 #define TRAVELTIME_INTERNAL 16//ms for "easy" to "internal"; 1 frame
 #define TRAVELTIME_SLOW (4*16)//ms for tap SDI nerfing, 4 frames
+
+#define TIMELIMIT_DOWNUP (16*3*250)//units of 4us; how long after a crouch to upward input should it begin a jump?
+#define JUMP_TIME (16*2*250)//units of 4us; after a recent crouch to upward input, always hold full up for 2 frames
 
 #define TIMELIMIT_DASH (16*15*250)//units of 4us; last dash time prior to a pivot input; 15 frames
 #define TIMELIMIT_PIVOT (24*250)//units of 4us; any longer than 1.5 frames is not likely to be a pivot
@@ -407,6 +411,12 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     //if it's a pivot uptilt coordinate, make Y jump //TODO
 
     //if it's a crouch to upward coordinate, make Y jump //TODO
+    if(aHistory[currentIndexA].y_start < ANALOG_STICK_CROUCH &&//started out in a crouch
+       aHistory[currentIndexA].y > ANALOG_DEAD_MAX &&//wanting to go out of the deadzone
+       (aHistory[currentIndexA].timestamp-aHistory[lookback(currentIndexA,1)].timestamp) < TIMELIMIT_DOWNUP &&//the upward input occurred < 3 frames after the previous stick movement
+       (currentTime-aHistory[currentIndexA].timestamp) < JUMP_TIME) {//it's been less than 2 frames since the stick was moved up (this sets the duration of the stick jump input)
+           prelimAY = 255;
+    }
 
     //if it's wank sdi (TODO) or diagonal tap SDI, lock out the cross axis
     const uint8_t sdi = isTapSDI(aHistory, currentIndexA, currentTime, sampleSpacing);
