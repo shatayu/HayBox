@@ -425,13 +425,23 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     const uint8_t sdi = isTapSDI(aHistory, currentIndexA, currentTime, sampleSpacing);
     if(sdi & (BITS_SDI_TAP_DIAG | BITS_SDI_TAP_CRDG)){
         if(sdi & (BITS_L | BITS_R)) {
-            //make sure future travel time begins at the origin
-            aHistory[currentIndexA].y_end = ANALOG_STICK_NEUTRAL;
+            //lock the cross axis
             prelimAY = ANALOG_STICK_NEUTRAL;
+            //make sure future cross axis travel time begins at the origin
+            aHistory[currentIndexA].y_end = prelimAY;
+            //prevent the cardinal axis from dipping below the sdi threshold by preserving its coordinate
+            prelimAX = aHistory[currentIndexA].x_start;
+            //make sure that future cardinal travel time begins where it was before
+            aHistory[currentIndexA].x_end = prelimAX;
         } else if(sdi & (BITS_U | BITS_D)) {
-            //make sure future travel time begins at the origin
-            aHistory[currentIndexA].x_end = ANALOG_STICK_NEUTRAL;
+            //lock the cross axis
             prelimAX = ANALOG_STICK_NEUTRAL;
+            //make sure future cross axis travel time begins at the origin
+            aHistory[currentIndexA].x_end = prelimAX;
+            //prevent the cardinal axis from dipping below the sdi threshold by preserving its coordinate
+            prelimAY = aHistory[currentIndexA].y_start;
+            //make sure that future cardinal travel time begins where it was before
+            aHistory[currentIndexA].y_end = prelimAY;
         }//one or the other should occur
     }
 
