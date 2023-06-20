@@ -305,7 +305,7 @@ void travelTimeCalc(const uint16_t samplesElapsed,
                     uint8_t &outX,
                     uint8_t &outY) {
     //check for old data; this prevents overflow from causing issues
-    if(samplesElapsed > 15*16*2) {//15 frames * 16 ms * max 2 samples per frame
+    if(samplesElapsed > 5*16*2) {//5 frames * 16 ms * max 2 samples per frame
         oldChange = true;
     }
     if(oldChange) {
@@ -433,6 +433,7 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
 
     //if we have a new coordinate, record the new info, the travel time'd locked out stick coordinate, and set travel time
     if(aHistory[currentIndexA].x != rawOutputIn.leftStickX || aHistory[currentIndexA].y != rawOutputIn.leftStickY) {
+        oldA = false;
         currentIndexA = (currentIndexA + 1) % HISTORYLEN;
 
         const uint8_t xIn = rawOutputIn.leftStickX;
@@ -467,10 +468,11 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
         aHistory[currentIndexA].tt = prelimTT;
     }
     if(cHistory[currentIndexC].x != rawOutputIn.rightStickX || cHistory[currentIndexC].y != rawOutputIn.rightStickY) {
+        oldC = false;
         currentIndexC = (currentIndexC + 1) % HISTORYLEN;
 
         const uint8_t xIn = rawOutputIn.rightStickX;
-        const uint8_t yIn = rawOutputIn.rightStickX;
+        const uint8_t yIn = rawOutputIn.rightStickY;
 
         cHistory[currentIndexC].timestamp = currentTime;
         cHistory[currentIndexC].x = xIn;
@@ -502,7 +504,8 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     finalOutput.y               = rawOutputIn.y;
     finalOutput.buttonL         = rawOutputIn.buttonL;
     finalOutput.buttonR         = rawOutputIn.buttonR;
-    finalOutput.triggerLDigital = rawOutputIn.triggerRDigital;
+    finalOutput.triggerLDigital = rawOutputIn.triggerLDigital;
+    finalOutput.triggerRDigital = rawOutputIn.triggerRDigital;
     finalOutput.start           = rawOutputIn.start;
     finalOutput.select          = rawOutputIn.select;
     finalOutput.home            = rawOutputIn.home;
@@ -517,5 +520,5 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     finalOutput.rightStickX     = prelimCX;
     finalOutput.rightStickY     = prelimCY;
     finalOutput.triggerLAnalog  = rawOutputIn.triggerLAnalog;
-    finalOutput.triggerLDigital = rawOutputIn.triggerLDigital;
+    finalOutput.triggerRAnalog  = rawOutputIn.triggerRAnalog;
 }
