@@ -95,6 +95,29 @@ void GamecubeBackend::SendReport() {
 
             if(_nerfOn) {
                 //APPLY NERFS HERE
+                OutputState nerfedOutputs;
+                limitOutputs(sampleSpacing/4, _outputs, nerfedOutputs);
+                // Digital outputs
+                _report.a = nerfedOutputs.a;
+                _report.b = nerfedOutputs.b;
+                _report.x = nerfedOutputs.x;
+                _report.y = nerfedOutputs.y;
+                _report.z = nerfedOutputs.buttonR;
+                _report.l = nerfedOutputs.triggerLDigital;
+                _report.r = nerfedOutputs.triggerRDigital;
+                _report.start = nerfedOutputs.start;
+                _report.dpad_left = nerfedOutputs.dpadLeft | nerfedOutputs.select;
+                _report.dpad_right = nerfedOutputs.dpadRight | nerfedOutputs.home;
+                _report.dpad_down = nerfedOutputs.dpadDown;
+                _report.dpad_up = nerfedOutputs.dpadUp;
+
+                // Analog outputs
+                _report.stick_x = nerfedOutputs.leftStickX;
+                _report.stick_y = nerfedOutputs.leftStickY;
+                _report.cstick_x = nerfedOutputs.rightStickX;
+                _report.cstick_y = nerfedOutputs.rightStickY;
+                _report.l_analog = nerfedOutputs.triggerLAnalog;
+                _report.r_analog = nerfedOutputs.triggerRAnalog;
             } else {
                 // Digital outputs
                 _report.a = _outputs.a;

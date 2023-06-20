@@ -7,8 +7,7 @@
 //override the socd assigned, just for melee configurations
 #define MELEE_SOCD socd::SOCD_NEUTRAL
 
-void limitOutputs(OutputState outputArray[], const uint16_t index, const uint16_t length,
-                 const uint16_t sampleSpacing,
+void limitOutputs(const uint16_t sampleSpacing,
                  const OutputState &rawOutput,
                  OutputState &finalOutput);
 

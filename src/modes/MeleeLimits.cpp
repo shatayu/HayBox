@@ -326,7 +326,7 @@ void travelTimeCalc(const uint16_t samplesElapsed,
 }
 
 void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
-                  OutputState &rawOutputIn,
+                  const OutputState &rawOutputIn,
                   OutputState &finalOutput) {
     //First, we want to check if the raw output has changed.
     //If it has changed, then we need to store it with a timestamp in our buffer.
