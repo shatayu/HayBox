@@ -8,7 +8,6 @@
 #define ANALOG_DEAD_MAX (128+22)/*this is in the deadzone*/
 #define ANALOG_STICK_MAX 208
 #define ANALOG_STICK_CROUCH (128-50)/*this y coordinate will hold a crouch*/
-#define ANALOG_STICK_JUMP (128+
 #define ANALOG_DASH_LEFT (128-64)/*this x coordinate will dash left*/
 #define ANALOG_DASH_RIGHT (128+64)/*this x coordinate will dash right*/
 #define MELEE_RIM_RAD2 6185/*if x^2+y^2 >= this, it's on the rim*/
