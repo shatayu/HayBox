@@ -469,8 +469,8 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     if(cHistory[currentIndexC].x != rawOutputIn.rightStickX || cHistory[currentIndexC].y != rawOutputIn.rightStickY) {
         currentIndexC = (currentIndexC + 1) % HISTORYLEN;
 
-        const uint8_t xIn = rawOutputIn.leftStickX;
-        const uint8_t yIn = rawOutputIn.leftStickX;
+        const uint8_t xIn = rawOutputIn.rightStickX;
+        const uint8_t yIn = rawOutputIn.rightStickX;
 
         cHistory[currentIndexC].timestamp = currentTime;
         cHistory[currentIndexC].x = xIn;
