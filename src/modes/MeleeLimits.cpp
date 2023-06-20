@@ -363,6 +363,8 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
             aHistory[i].y = ANALOG_STICK_NEUTRAL;
             aHistory[i].x_start = ANALOG_STICK_NEUTRAL;
             aHistory[i].y_start = ANALOG_STICK_NEUTRAL;
+            aHistory[i].x_end = ANALOG_STICK_NEUTRAL;
+            aHistory[i].y_end = ANALOG_STICK_NEUTRAL;
             aHistory[i].zone = 0;
             aHistory[i].easy = true;
             cHistory[i].timestamp = 0;
@@ -371,6 +373,8 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
             cHistory[i].y = ANALOG_STICK_NEUTRAL;
             cHistory[i].x_start = ANALOG_STICK_NEUTRAL;
             cHistory[i].y_start = ANALOG_STICK_NEUTRAL;
+            cHistory[i].x_end = ANALOG_STICK_NEUTRAL;
+            cHistory[i].y_end = ANALOG_STICK_NEUTRAL;
             cHistory[i].zone = 0;
             cHistory[i].easy = true;
         }
