@@ -21,7 +21,7 @@ GamecubeBackend::GamecubeBackend(
     : CommunicationBackend(input_sources, input_source_count) {
     _gamecube = new GamecubeConsole(data_pin, pio, sm, offset);
     _report = default_gc_report;
-    _nerfOn = true;//nerfOn;
+    _nerfOn = nerfOn;
 }
 
 GamecubeBackend::~GamecubeBackend() {
