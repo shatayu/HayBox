@@ -29,8 +29,7 @@
 #define TIMELIMIT_QCIRC (16*6*250)//units of 4us; 6 frames
 
 #define TIMELIMIT_TAP (16*6*250)//units of 4us; 6 frames
-//#define TIMELIMIT_TAP_PLUS (16*9*250)//units of 4us; 9 frames//aaa this overflows on arduino 16bit because 36000 > 32767
-#define TIMELIMIT_TAP_PLUS (32767)
+#define TIMELIMIT_TAP_PLUS 36000//(16*9*250)//units of 4us; 9 frames ...the expression overflows on arduino for some reason
 
 #define TIMELIMIT_CARDIAG (16*8*250)//units of 4us; 8 frames
 
