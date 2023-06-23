@@ -21,6 +21,7 @@
 #define JUMP_TIME (16*2*250)//units of 4us; after a recent crouch to upward input, always hold full up for 2 frames
 
 #define TIMELIMIT_FRAME (16*250)//units of 4us; 1 frame, for reference
+#define TIMELIMIT_HALF_FRAME (8*250)//units of 4us; 1 frame, for reference
 
 #define TIMELIMIT_DASH (16*15*250)//units of 4us; last dash time prior to a pivot input; 15 frames
 #define TIMELIMIT_PIVOT (24*250)//units of 4us; any longer than 1.5 frames is not likely to be a pivot
@@ -28,6 +29,7 @@
 #define TIMELIMIT_QCIRC (16*6*250)//units of 4us; 6 frames
 
 #define TIMELIMIT_TAP (16*6*250)//units of 4us; 6 frames
+#define TIMELIMIT_TAP_PLUS (16*9*250)//units of 4us; 9 frames
 
 #define TIMELIMIT_CARDIAG (16*8*250)//units of 4us; 8 frames
 
@@ -223,6 +225,7 @@ uint8_t isWankSDI(const shortstate coordHistory[HISTORYLEN],
 
 uint8_t isTapSDI(const shortstate coordHistory[HISTORYLEN],
                  const uint8_t currentIndex,
+                 const bool currentTime,
                  const bool oldA,
                  const uint16_t sampleSpacing) {
     uint8_t output = 0;
@@ -242,10 +245,11 @@ uint8_t isTapSDI(const shortstate coordHistory[HISTORYLEN],
     // if we're changing zones back and forth
     if(zoneList[0] != zoneList[1] && (zoneList[0] == zoneList[2]) && (zoneList[1] == zoneList[3])) {
         //check the time duration
+        const uint16_t timeDiff0 = (currentTime - timeList[2])*sampleSpacing;//make sure things aren't reliant on long-past inputs
         const uint16_t timeDiff1 = (timeList[0] - timeList[2])*sampleSpacing;//rising edge to rising edge, or falling edge to falling edge
         const uint16_t timeDiff2 = (timeList[0] - timeList[1])*sampleSpacing;//rising to falling, or falling to rising
         //We want to nerf it if there is more than one press every 6 frames, but not if the previous press or release duration is less than 1 frame
-        if(!oldA && timeDiff1 < TIMELIMIT_TAP && timeDiff2 > TIMELIMIT_FRAME) {
+        if(!oldA && timeDiff0 < TIMELIMIT_TAP_PLUS && timeDiff1 < TIMELIMIT_TAP && timeDiff0 > TIMELIMIT_HALF_FRAME) {
             if((zoneList[0] == 0) || (zoneList[1] == 0)) {//if one of the pairs of zones is zero, it's tapping a cardinal
                 output = output | BITS_SDI_TAP_CARD;
             } else if(popCur+popOne == 3) { //one is cardinal and the other is diagonal
@@ -440,7 +444,7 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     }
 
     //if it's wank sdi (TODO) or diagonal tap SDI, lock out the cross axis
-    const uint8_t sdi = isTapSDI(aHistory, currentIndexA, oldA, sampleSpacing);
+    const uint8_t sdi = isTapSDI(aHistory, currentIndexA, currentTime, oldA, sampleSpacing);
     static bool wankNerf = false;
     if(sdi & (BITS_SDI_TAP_DIAG | BITS_SDI_TAP_CRDG)){
         if(sdi & (BITS_L | BITS_R)) {
@@ -453,7 +457,6 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
             //make sure that future cardinal travel time begins where it was before
             aHistory[currentIndexA].x_end = prelimAX;
             wankNerf = true;
-            prelimCX = 255;
         } else if(sdi & (BITS_U | BITS_D)) {
             //lock the cross axis
             prelimAX = ANALOG_STICK_NEUTRAL;
@@ -464,7 +467,6 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
             //make sure that future cardinal travel time begins where it was before
             aHistory[currentIndexA].y_end = prelimAY;
             wankNerf = true;
-            prelimCY = 255;
         }//one or the other should occur
     } else if(wankNerf) {
         aHistory[currentIndexA].x_end = aHistory[currentIndexA].x;
