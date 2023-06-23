@@ -135,7 +135,7 @@ void GamecubeBackend::SendReport() {
             //digitalWrite(21, i%2 == 0 ? HIGH : LOW);
             digitalWrite(21, LOW);
 
-            const uint16_t nerfTime = 0/4;
+            const uint16_t nerfTime = 200/4;
             const uint16_t computationTime = 700/4 + nerfTime*_nerfOn;//depends on the platform; 4us steps.
             //700 microseconds is sufficient with no travel time computation
             const uint16_t targetTime = ((i+1)*sampleSpacing)-computationTime;
@@ -153,6 +153,29 @@ void GamecubeBackend::SendReport() {
 
             if(_nerfOn) {
                 //APPLY NERFS HERE
+                OutputState nerfedOutputs;
+                limitOutputs(sampleSpacing, _outputs, nerfedOutputs);
+                // Digital outputs
+                _data.report.a = nerfedOutputs.a;
+                _data.report.b = nerfedOutputs.b;
+                _data.report.x = nerfedOutputs.x;
+                _data.report.y = nerfedOutputs.y;
+                _data.report.z = nerfedOutputs.buttonR;
+                _data.report.l = nerfedOutputs.triggerLDigital;
+                _data.report.r = nerfedOutputs.triggerRDigital;
+                _data.report.start = nerfedOutputs.start;
+                _data.report.dleft = nerfedOutputs.dpadLeft | nerfedOutputs.select;
+                _data.report.dright = nerfedOutputs.dpadRight | nerfedOutputs.home;
+                _data.report.ddown = nerfedOutputs.dpadDown;
+                _data.report.dup = nerfedOutputs.dpadUp;
+
+                // Analog outputs
+                _data.report.xAxis = nerfedOutputs.leftStickX;
+                _data.report.yAxis = nerfedOutputs.leftStickY;
+                _data.report.cxAxis = nerfedOutputs.rightStickX;
+                _data.report.cyAxis = nerfedOutputs.rightStickY;
+                _data.report.left = nerfedOutputs.triggerLAnalog;
+                _data.report.right = nerfedOutputs.triggerRAnalog;
             } else {
                 // Digital outputs
                 _data.report.a = _outputs.a;

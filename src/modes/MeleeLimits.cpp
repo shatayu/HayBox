@@ -29,7 +29,8 @@
 #define TIMELIMIT_QCIRC (16*6*250)//units of 4us; 6 frames
 
 #define TIMELIMIT_TAP (16*6*250)//units of 4us; 6 frames
-#define TIMELIMIT_TAP_PLUS (16*9*250)//units of 4us; 9 frames
+//#define TIMELIMIT_TAP_PLUS (16*9*250)//units of 4us; 9 frames//aaa this overflows on arduino 16bit because 36000 > 32767
+#define TIMELIMIT_TAP_PLUS (32767)
 
 #define TIMELIMIT_CARDIAG (16*8*250)//units of 4us; 8 frames
 
@@ -247,7 +248,7 @@ uint8_t isTapSDI(const shortstate coordHistory[HISTORYLEN],
         //check the time duration
         const uint16_t timeDiff0 = (currentTime - timeList[2])*sampleSpacing;//make sure things aren't reliant on long-past inputs
         const uint16_t timeDiff1 = (timeList[0] - timeList[2])*sampleSpacing;//rising edge to rising edge, or falling edge to falling edge
-        const uint16_t timeDiff2 = (timeList[0] - timeList[1])*sampleSpacing;//rising to falling, or falling to rising
+        //const uint16_t timeDiff2 = (timeList[0] - timeList[1])*sampleSpacing;//rising to falling, or falling to rising
         //We want to nerf it if there is more than one press every 6 frames, but not if the previous press or release duration is less than 1 frame
         if(!oldA && timeDiff0 < TIMELIMIT_TAP_PLUS && timeDiff1 < TIMELIMIT_TAP && timeDiff0 > TIMELIMIT_HALF_FRAME) {
             if((zoneList[0] == 0) || (zoneList[1] == 0)) {//if one of the pairs of zones is zero, it's tapping a cardinal
