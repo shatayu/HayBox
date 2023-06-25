@@ -9,6 +9,8 @@
 #include <hardware/timer.h>
 #include <hardware/gpio.h>
 
+//#define TIMINGDEBUG
+
 GamecubeBackend::GamecubeBackend(
     InputSource **input_sources,
     size_t input_source_count,
@@ -53,7 +55,9 @@ void GamecubeBackend::SendReport() {
 
     if(detect) {
         //run loop time detection procedure
+#ifdef TIMINGDEBUG
         gpio_put(1, loopCount%2 == 0);
+#endif
         loopCount++;
         if(loopCount > 5 && loopTime > 300) {//screen out implausibly fast samples; the limit is 2500 Hz (400 us)
             minLoop = min(minLoop, loopTime);
@@ -76,9 +80,11 @@ void GamecubeBackend::SendReport() {
         //we want the last sample to begin [850 + extra computation time] before the beginning of the last poll to give room for the sample and the travel time+nerf computation
         //
         for (uint i = 0; i < sampleCount; i++) {
+#ifdef TIMINGDEBUG
             gpio_put(1, 0);
+#endif
 
-            const int nerfTime = 50;
+            const int nerfTime = 0;
             const int computationTime = 250 + nerfTime*_nerfOn;//us; depends on the platform.
             const uint32_t targetTime = ((i+1)*sampleSpacing)-computationTime;
             int count = 0;
@@ -86,7 +92,9 @@ void GamecubeBackend::SendReport() {
                 count++;//do something?
                 //spinlock
             }
+#ifdef TIMINGDEBUG
             gpio_put(1, count>0);
+#endif
 
             ScanInputs(InputScanSpeed::FAST);
 
@@ -96,7 +104,7 @@ void GamecubeBackend::SendReport() {
             if(_nerfOn) {
                 //APPLY NERFS HERE
                 OutputState nerfedOutputs;
-                limitOutputs(sampleSpacing/4, _outputs, nerfedOutputs);
+                limitOutputs(sampleSpacing/4, _inputs, _outputs, nerfedOutputs);
                 // Digital outputs
                 _report.a = nerfedOutputs.a;
                 _report.b = nerfedOutputs.b;
@@ -149,7 +157,9 @@ void GamecubeBackend::SendReport() {
     }
 
     _gamecube->WaitForPollStart();
+#ifdef TIMINGDEBUG
     gpio_put(1, 1);
+#endif
 
     // Send outputs to console unless poll command is invalid.
     if (_gamecube->WaitForPollEnd() != PollStatus::ERROR) {

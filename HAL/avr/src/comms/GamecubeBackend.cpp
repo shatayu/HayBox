@@ -7,6 +7,8 @@
 
 #include <Nintendo.h>
 
+//#define TIMINGDEBUG
+
 void zeroTcnt1() {
     //Disable interrupts
     noInterrupts();
@@ -53,8 +55,11 @@ GamecubeBackend::GamecubeBackend(
 
     //Serial.begin(115200);
     //Serial.println("Testing serial output");
+
     //debug output for timing experiments
+#ifdef TIMINGDEBUG
     pinMode(21, OUTPUT);
+#endif
 
     //Set up hardware timer
     TCCR1A = 0;
@@ -84,8 +89,9 @@ void GamecubeBackend::SendReport() {
 
     if(detect && status) {
         //run loop time detection procedure
-        //digitalWrite(21, loopCount%2 == 0 ? HIGH : LOW);
+#ifdef TIMINGDEBUG
         digitalWrite(21, HIGH);
+#endif
         loopCount++;
         if(loopCount > 5 && loopTime > 300/4) {//screen out implausibly fast samples; the limit is 2500 Hz (400 us) so we use 300 us as the limit, ignore first few polls
             minLoop = min(minLoop, loopTime);
@@ -132,10 +138,11 @@ void GamecubeBackend::SendReport() {
         //we want the last sample to begin [850 + extra computation time] before the beginning of the last poll to give room for the sample and the travel time+nerf computation
         //
         for (uint i = 0; i < sampleCount; i++) {
-            //digitalWrite(21, i%2 == 0 ? HIGH : LOW);
+#ifdef TIMINGDEBUG
             digitalWrite(21, LOW);
+#endif
 
-            const uint16_t nerfTime = 200/4;
+            const uint16_t nerfTime = 100/4;
             const uint16_t computationTime = 700/4 + nerfTime*_nerfOn;//depends on the platform; 4us steps.
             //700 microseconds is sufficient with no travel time computation
             const uint16_t targetTime = ((i+1)*sampleSpacing)-computationTime;
@@ -154,7 +161,7 @@ void GamecubeBackend::SendReport() {
             if(_nerfOn) {
                 //APPLY NERFS HERE
                 OutputState nerfedOutputs;
-                limitOutputs(sampleSpacing, _outputs, nerfedOutputs);
+                limitOutputs(sampleSpacing, _inputs, _outputs, nerfedOutputs);
                 // Digital outputs
                 _data.report.a = nerfedOutputs.a;
                 _data.report.b = nerfedOutputs.b;
@@ -200,12 +207,18 @@ void GamecubeBackend::SendReport() {
                 _data.report.right = _outputs.triggerRAnalog + 31;
             }
 
+#ifdef TIMINGDEBUG
             digitalWrite(21, count ? HIGH : LOW);
+#endif
         }
     }
 
+#ifdef TIMINGDEBUG
     digitalWrite(21, HIGH);
+#endif
     // Send outputs to console.
     status = _gamecube->write(_data);
+#ifdef TIMINGDEBUG
     digitalWrite(21, LOW);
+#endif
 }
