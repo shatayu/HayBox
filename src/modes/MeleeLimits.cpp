@@ -322,7 +322,7 @@ void travelTimeCalc(const uint16_t samplesElapsed,
     if(samplesElapsed > 5*16*2) {//5 frames * 16 ms * max 2 samples per frame
         oldChange = true;
     }
-    if(oldChange) {
+    if(oldChange || msTravel == 0) {
         outX = destX;
         outY = destY;
         return;
@@ -340,6 +340,7 @@ void travelTimeCalc(const uint16_t samplesElapsed,
 }
 
 void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
+                  const InputState &inputs,
                   const OutputState &rawOutputIn,
                   OutputState &finalOutput) {
     //First, we want to check if the raw output has changed.
@@ -509,6 +510,11 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
             prelimTT = max(prelimTT, TRAVELTIME_CROSS);
         }
         */
+        //If we're doing a diagonal airdodge, make travel time instant to prevent inconsistent wavedash angles
+        //this only fully works for neutral socd right now
+        if((inputs.left != inputs.right) && (inputs.down != inputs.up) && inputs.down && (inputs.r || inputs.l)) {
+            prelimTT = 0;
+        }
         aHistory[currentIndexA].tt = prelimTT;
     }
     if(cHistory[currentIndexC].x != rawOutputIn.rightStickX || cHistory[currentIndexC].y != rawOutputIn.rightStickY) {

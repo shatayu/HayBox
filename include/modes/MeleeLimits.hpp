@@ -8,7 +8,8 @@
 #define MELEE_SOCD socd::SOCD_NEUTRAL
 
 void limitOutputs(const uint16_t sampleSpacing,
-                 const OutputState &rawOutput,
-                 OutputState &finalOutput);
+                  const InputState &inputs,
+                  const OutputState &rawOutput,
+                  OutputState &finalOutput);
 
 #endif
