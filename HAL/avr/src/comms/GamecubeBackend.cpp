@@ -142,7 +142,7 @@ void GamecubeBackend::SendReport() {
             digitalWrite(21, LOW);
 #endif
 
-            const uint16_t nerfTime = 100/4;
+            const uint16_t nerfTime = 150/4;
             const uint16_t computationTime = 700/4 + nerfTime*_nerfOn;//depends on the platform; 4us steps.
             //700 microseconds is sufficient with no travel time computation
             const uint16_t targetTime = ((i+1)*sampleSpacing)-computationTime;
