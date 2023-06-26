@@ -181,8 +181,8 @@ void GamecubeBackend::SendReport() {
                 _data.report.yAxis = nerfedOutputs.leftStickY;
                 _data.report.cxAxis = nerfedOutputs.rightStickX;
                 _data.report.cyAxis = nerfedOutputs.rightStickY;
-                _data.report.left = nerfedOutputs.triggerLAnalog;
-                _data.report.right = nerfedOutputs.triggerRAnalog;
+                _data.report.left = nerfedOutputs.triggerLAnalog + 31;
+                _data.report.right = nerfedOutputs.triggerRAnalog + 31;
             } else {
                 // Digital outputs
                 _data.report.a = _outputs.a;
