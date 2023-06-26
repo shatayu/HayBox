@@ -21,7 +21,7 @@
 #define JUMP_TIME (16*2*250)//units of 4us; after a recent crouch to upward input, always hold full up for 2 frames
 
 #define TIMELIMIT_FRAME (16*250)//units of 4us; 1 frame, for reference
-#define TIMELIMIT_HALF_FRAME (8*250)//units of 4us; 1 frame, for reference
+#define TIMELIMIT_DEBOUNCE (6*250)//units of 4us; 6ms
 
 #define TIMELIMIT_DASH (16*15*250)//units of 4us; last dash time prior to a pivot input; 15 frames
 #define TIMELIMIT_PIVOT (24*250)//units of 4us; any longer than 1.5 frames is not likely to be a pivot
@@ -249,7 +249,7 @@ uint8_t isTapSDI(const shortstate coordHistory[HISTORYLEN],
         const uint16_t timeDiff1 = (timeList[0] - timeList[2])*sampleSpacing;//rising edge to rising edge, or falling edge to falling edge
         //const uint16_t timeDiff2 = (timeList[0] - timeList[1])*sampleSpacing;//rising to falling, or falling to rising
         //We want to nerf it if there is more than one press every 6 frames, but not if the previous press or release duration is less than 1 frame
-        if(!oldA && timeDiff0 < TIMELIMIT_TAP_PLUS && timeDiff1 < TIMELIMIT_TAP && timeDiff0 > TIMELIMIT_HALF_FRAME) {
+        if(!oldA && timeDiff0 < TIMELIMIT_TAP_PLUS && timeDiff1 < TIMELIMIT_TAP && timeDiff0 > TIMELIMIT_DEBOUNCE) {
             if((zoneList[0] == 0) || (zoneList[1] == 0)) {//if one of the pairs of zones is zero, it's tapping a cardinal
                 output = output | BITS_SDI_TAP_CARD;
             } else if(popCur+popOne == 3) { //one is cardinal and the other is diagonal
@@ -322,11 +322,6 @@ void travelTimeCalc(const uint16_t samplesElapsed,
     if(samplesElapsed > 5*16*2) {//5 frames * 16 ms * max 2 samples per frame
         oldChange = true;
     }
-    if(oldChange || msTravel == 0) {
-        outX = destX;
-        outY = destY;
-        return;
-    }
     const uint16_t timeElapsed = samplesElapsed*sampleSpacing;//units of 4 us
     const uint16_t travelTimeElapsed = timeElapsed/msTravel;//250 times the fraction of the travel time elapsed
     const uint16_t cappedTT = min(250, travelTimeElapsed);
@@ -337,6 +332,10 @@ void travelTimeCalc(const uint16_t samplesElapsed,
     const uint16_t newY = startY+dY;
     outX = (uint8_t) newX;
     outY = (uint8_t) newY;
+    if(oldChange || msTravel == 0) {
+        outX = destX;
+        outY = destY;
+    }
 }
 
 void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
@@ -529,8 +528,8 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
         cHistory[currentIndexC].y = yIn;
         cHistory[currentIndexC].x_end = xIn;
         cHistory[currentIndexC].y_end = yIn;
-        cHistory[currentIndexC].x_start = prelimAX;
-        cHistory[currentIndexC].y_start = prelimAY;
+        cHistory[currentIndexC].x_start = prelimCX;
+        cHistory[currentIndexC].y_start = prelimCY;
         cHistory[currentIndexC].zone = zone(xIn, yIn);
         cHistory[currentIndexC].easy = isEasy(xIn, yIn);
 
