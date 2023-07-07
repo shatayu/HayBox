@@ -292,8 +292,9 @@ uint8_t isTapSDI(const shortstate coordHistory[HISTORYLEN],
     //if it hit only one cardinal
     //             if only the same diagonal was pressed
     //                          if the origin, cardinal, and diagonal were all entered
-    //                                                                                   within the time limit
-    if(cardZone && diagMatch && origCount && cardCount && diagCount && /*recentOrig &&*/ shortTime) {
+    //                                                                 if there were either two cardinals or two origins (to prevent dash-diagonal-mod from triggering this)
+    //                                                                                                     within the time limit
+    if(cardZone && diagMatch && origCount && cardCount && diagCount && (origCount > 1 || cardCount > 1) && shortTime) {
         output = output | BITS_SDI_TAP_CRDG;
     }
 
@@ -473,6 +474,14 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
         aHistory[currentIndexA].y_end = aHistory[currentIndexA].y;
     }
 
+    //If we're doing a diagonal airdodge, make travel time instant to prevent inconsistent wavedash angles
+    //this only fully works for neutral socd right now
+    //this is a catchall to force the latest output
+    if((inputs.left != inputs.right) && (inputs.down != inputs.up) && inputs.down && (inputs.r || inputs.l)) {
+        prelimAX = rawOutputIn.leftStickX;
+        prelimAY = rawOutputIn.leftStickY;
+    }
+
     //if we have a new coordinate, record the new info, the travel time'd locked out stick coordinate, and set travel time
     if(aHistory[currentIndexA].x != rawOutputIn.leftStickX || aHistory[currentIndexA].y != rawOutputIn.leftStickY) {
         oldA = false;
@@ -511,6 +520,7 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
         */
         //If we're doing a diagonal airdodge, make travel time instant to prevent inconsistent wavedash angles
         //this only fully works for neutral socd right now
+        //it doesn't fully work either, so I'm going to put a catchall in the outer loop
         if((inputs.left != inputs.right) && (inputs.down != inputs.up) && inputs.down && (inputs.r || inputs.l)) {
             prelimTT = 0;
         }
