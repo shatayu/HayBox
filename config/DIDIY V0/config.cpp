@@ -22,136 +22,8 @@
 CommunicationBackend **backends = nullptr;
 size_t backend_count;
 KeyboardMode *current_kb_mode = nullptr;
-/*
-#define ALTMAP \
-    {&InputState::l,            5 },\
-    { &InputState::left,        4 },\
-    { &InputState::down,        3 },\
-    { &InputState::right,       2 },\
-\
-    { &InputState::mod_x,       6 },\
-    { &InputState::mod_y,       7 },\
-\
-    { &InputState::select,      10},\
-    { &InputState::start,       0 },\
-    { &InputState::home,        11},\
-\
-    { &InputState::c_left,      13},\
-    { &InputState::c_up,        12},\
-    { &InputState::c_down,      15},\
-    { &InputState::a,           14},\
-    { &InputState::c_right,     16},\
-\
-    { &InputState::b,           26},\
-    { &InputState::x,           21},\
-    { &InputState::z,           19},\
-    { &InputState::up,          17},\
-\
-    { &InputState::r,           27},\
-    { &InputState::y,           22},\
-    { &InputState::lightshield, 20},\
-    { &InputState::midshield,   18},
-*/
-
-/*
-//Chef: r/b swap
-#define ALTMAP \
-    {&InputState::l,            5 },\
-    { &InputState::left,        4 },\
-    { &InputState::down,        3 },\
-    { &InputState::right,       2 },\
-\
-    { &InputState::mod_x,       6 },\
-    { &InputState::mod_y,       7 },\
-\
-    { &InputState::select,      10},\
-    { &InputState::start,       0 },\
-    { &InputState::home,        11},\
-\
-    { &InputState::c_left,      13},\
-    { &InputState::c_up,        12},\
-    { &InputState::c_down,      15},\
-    { &InputState::a,           14},\
-    { &InputState::c_right,     16},\
-\
-    { &InputState::b,           27},\
-    { &InputState::x,           21},\
-    { &InputState::z,           19},\
-    { &InputState::up,          17},\
-\
-    { &InputState::r,           26},\
-    { &InputState::y,           22},\
-    { &InputState::lightshield, 20},\
-    { &InputState::midshield,   18},
-*/
-
-/*
-//Potion: B/Z and cu/cd swap for peach
-#define ALTMAP \
-    {&InputState::l,            5 },\
-    { &InputState::left,        4 },\
-    { &InputState::down,        3 },\
-    { &InputState::right,       2 },\
-\
-    { &InputState::mod_x,       6 },\
-    { &InputState::mod_y,       7 },\
-\
-    { &InputState::select,      10},\
-    { &InputState::start,       0 },\
-    { &InputState::home,        11},\
-\
-    { &InputState::c_left,      13},\
-    { &InputState::c_up,        15},\
-    { &InputState::c_down,      12},\
-    { &InputState::a,           14},\
-    { &InputState::c_right,     16},\
-\
-    { &InputState::b,           19},\
-    { &InputState::x,           21},\
-    { &InputState::z,           26},\
-    { &InputState::up,          17},\
-\
-    { &InputState::r,           27},\
-    { &InputState::y,           22},\
-    { &InputState::lightshield, 20},\
-    { &InputState::midshield,   18},
-*/
-
-/*
-//technospider on rana digital
-#define ALTMAP \
-    {&InputState::l,            18 },\
-    { &InputState::left,        4 },\
-    { &InputState::down,        3 },\
-    { &InputState::right,       2 },\
-\
-    { &InputState::mod_x,       6 },\
-    { &InputState::mod_y,       17 },\
-\
-    { &InputState::select,      10},\
-    { &InputState::start,       0 },\
-    { &InputState::home,        11},\
-\
-    { &InputState::c_left,      13},\
-    { &InputState::c_up,        12},\
-    { &InputState::c_down,      15},\
-    { &InputState::a,           14},\
-    { &InputState::c_right,     16},\
-\
-    { &InputState::b,           21},\
-    { &InputState::x,           19},\
-    { &InputState::z,           22},\
-    { &InputState::up,          1},\
-\
-    { &InputState::r,           27},\
-    { &InputState::y,           20},\
-    { &InputState::lightshield, 5},\
-    { &InputState::midshield,   26},\
-    { &InputState::nunchuk_c,   7},//rana digital up2 is 1 normally
-*/
 
 GpioButtonMapping button_mappings[] = {
-#ifndef ALTMAP
     {&InputState::l,            5 },
     { &InputState::left,        4 },
     { &InputState::down,        3 },
@@ -160,9 +32,7 @@ GpioButtonMapping button_mappings[] = {
     { &InputState::mod_x,       6 },
     { &InputState::mod_y,       7 },
 
-    { &InputState::select,      10},
     { &InputState::start,       0 },
-    { &InputState::home,        11},
 
     { &InputState::c_left,      13},
     { &InputState::c_up,        12},
@@ -179,9 +49,6 @@ GpioButtonMapping button_mappings[] = {
     { &InputState::y,           22},
     { &InputState::lightshield, 20},
     { &InputState::midshield,   18},
-#else
-ALTMAP
-#endif
 };
 size_t button_count = sizeof(button_mappings) / sizeof(GpioButtonMapping);
 
@@ -189,8 +56,8 @@ const Pinout pinout = {
     .joybus_data = 28,
     .mux = -1,
     .nunchuk_detect = -1,
-    .nunchuk_sda = -1,
-    .nunchuk_scl = -1,
+    .nunchuk_sda = 8,
+    .nunchuk_scl = 9,
 };
 
 void setup() {
@@ -209,10 +76,6 @@ void setup() {
     gpio_init(PICO_DEFAULT_LED_PIN);
     gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
     gpio_put(PICO_DEFAULT_LED_PIN, 1);
-
-    // Debug output for timing stuff on gp1
-    gpio_init(1);
-    gpio_set_dir(1, GPIO_OUT);
 
     // Create array of input sources to be used.
     static InputSource *input_sources[] = { gpio_input };
@@ -252,13 +115,8 @@ void setup() {
         }
     } else {
         if (console == ConnectedConsole::GAMECUBE) {
-            if(button_holds.a) {//disable nerfs on holding A
-                primary_backend =
-                    new GamecubeBackend(input_sources, input_source_count, pinout.joybus_data, false);
-            } else {
-                primary_backend =
-                    new GamecubeBackend(input_sources, input_source_count, pinout.joybus_data, true);
-            }
+            primary_backend =
+                new GamecubeBackend(input_sources, input_source_count, pinout.joybus_data);
         } else if (console == ConnectedConsole::N64) {
             primary_backend = new N64Backend(input_sources, input_source_count, pinout.joybus_data);
         }
