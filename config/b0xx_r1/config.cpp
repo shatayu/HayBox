@@ -101,7 +101,7 @@ void setup() {
     }
 
     bool use_teleport = false;
-    if (button-holds.b) {
+    if (button_holds.b) {
         use_teleport = true;
     }
 

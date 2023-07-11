@@ -85,7 +85,7 @@ void setup() {
     backends = new CommunicationBackend *[backend_count] { primary_backend };
 
     bool use_teleport = false;
-    if (button-holds.b) {
+    if (button_holds.b) {
         use_teleport = true;
     }
 
