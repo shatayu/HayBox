@@ -54,7 +54,7 @@ KeyboardMode *current_kb_mode = nullptr;
 */
 
 /*
-//Chef: r/b swap
+//Group A Chef: r/b swap
 #define ALTMAP \
     {&InputState::l,            5 },\
     { &InputState::left,        4 },\
@@ -86,7 +86,7 @@ KeyboardMode *current_kb_mode = nullptr;
 */
 
 /*
-//Potion: B/Z and cu/cd swap for peach
+//Group C Potion: B/Z and cu/cd swap for peach
 #define ALTMAP \
     {&InputState::l,            5 },\
     { &InputState::left,        4 },\

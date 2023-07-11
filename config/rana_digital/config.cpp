@@ -24,7 +24,7 @@ size_t backend_count;
 KeyboardMode *current_kb_mode = nullptr;
 
 /*
-//technospider on rana digital
+//Group C technospider
 #define ALTMAP \
     {&InputState::l,            18},\
     { &InputState::left,        4 },\
