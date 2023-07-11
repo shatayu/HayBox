@@ -11,7 +11,7 @@ Users no longer need to hold A on plugin to optimize latency on console, and it'
 
 Instead, the A press on plugin disables all timing based nerfs.
 
-Additionally, it has a new feature from B0XX firmware 4.1 where you can hold B on plugin to get the shorter recovery coordinates all have magnitudes about 0.8, for use with teleport recovery characters.
+Additionally, you can hold B on plugin to get the shorter recovery coordinates all have magnitudes about 0.8, for use with teleport recovery characters, and you can hold down on plugin to get the crouch-walk option select.
 
 It also currently has built-in support for a handful more boards than mainline Haybox, notably B0XX R4, Htangl, and Rana Digital.
 
