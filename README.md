@@ -13,7 +13,7 @@ Instead, the A press on plugin disables all timing based nerfs.
 
 Additionally, it has a new feature from B0XX firmware 4.1 where you can hold B on plugin to get the shorter recovery coordinates all have magnitudes about 0.8, for use with teleport recovery characters.
 
-It also currently has built-in support for a handful more boards than mainline Haybox, notably B0XX R4 and Htangl.
+It also currently has built-in support for a handful more boards than mainline Haybox, notably B0XX R4, Htangl, and Rana Digital.
 
 # HayBox
 
