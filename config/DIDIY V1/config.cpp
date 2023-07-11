@@ -117,8 +117,13 @@ void setup() {
         }
     } else {
         if (console == ConnectedConsole::GAMECUBE) {
-            primary_backend =
-                new GamecubeBackend(input_sources, input_source_count, pinout.joybus_data);
+            if (button_holds.a) {//disable nerfs on holding A
+                primary_backend =
+                    new GamecubeBackend(input_sources, input_source_count, pinout.joybus_data, false);
+            } else {
+                primary_backend =
+                    new GamecubeBackend(input_sources, input_source_count, pinout.joybus_data, true);
+            }
         } else if (console == ConnectedConsole::N64) {
             primary_backend = new N64Backend(input_sources, input_source_count, pinout.joybus_data);
         }
@@ -128,10 +133,16 @@ void setup() {
         backends = new CommunicationBackend *[backend_count] { primary_backend };
     }
 
+    bool use_teleport = false;
+    if (button-holds.b) {
+        use_teleport = true;
+    }
+
     // Default to Melee mode.
     primary_backend->SetGameMode(
-        new Melee20Button(socd::SOCD_2IP_NO_REAC, { .crouch_walk_os = false })
+        new Melee20Button(socd::SOCD_2IP_NO_REAC, { .crouch_walk_os = false, .teleport_coords = use_teleport })
     );
+
 }
 
 void loop() {

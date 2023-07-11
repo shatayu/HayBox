@@ -8,6 +8,7 @@
 
 typedef struct {
     bool crouch_walk_os = false;
+    bool teleport_coords = false;
 } Melee20ButtonOptions;
 
 class Melee20Button : public ControllerMode {
