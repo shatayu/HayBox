@@ -86,6 +86,38 @@ KeyboardMode *current_kb_mode = nullptr;
 */
 
 /*
+//Group A Daniel
+#define ALTMAP \
+    {&InputState::l,            19},\
+    { &InputState::left,        4 },\
+    { &InputState::down,        3 },\
+    { &InputState::right,       2 },\
+\
+    { &InputState::mod_x,       6 },\
+    { &InputState::mod_y,       7 },\
+\
+    { &InputState::select,      10},\
+    { &InputState::start,       0 },\
+    { &InputState::home,        11},\
+\
+    { &InputState::c_left,      13},\
+    { &InputState::c_up,        12},\
+    { &InputState::c_down,      20},\
+    { &InputState::a,           14},\
+    { &InputState::c_right,     16},\
+\
+    { &InputState::b,           15},\
+    { &InputState::x,           21},\
+    { &InputState::z,           17},\
+    { &InputState::up,          26},\
+\
+    { &InputState::r,           27},\
+    { &InputState::y,           22},\
+    { &InputState::lightshield, 5 },\
+    { &InputState::midshield,   18},
+*/
+
+/*
 //Group C Potion: B/Z and cu/cd swap for peach
 #define ALTMAP \
     {&InputState::l,            5 },\
