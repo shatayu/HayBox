@@ -1,3 +1,18 @@
+# HayBox Travel Time
+
+This is a firmware designed for experimenting with travel time and other subframe nerfs for Melee based on Haystack's HayBox.
+
+Currently, the nerfs only apply when attached via a Gamecube cable, not over USB.
+
+The nerfs are subject to change, but in addition to that it offers several features:
+
+Arduino-based boxes will work at the same latency regardless of polling rate, as long as the poll spacing is constant.
+Users no longer need to hold A on plugin to optimize latency on console, and it'll have slightly less lag on adapters.
+
+Instead, the A press on plugin disables all timing based nerfs.
+
+Additionally, it has a new feature from B0XX firmware 4.1 where you can hold B on plugin to get the shorter recovery coordinates all have magnitudes about 0.8, for use with teleport recovery characters.
+
 # HayBox
 
 HayBox is a modular, cross-platform firmware for digital or mixed analog/digital controllers, primarily targeted at [B0XX](https://b0xx.com)-style controllers.
