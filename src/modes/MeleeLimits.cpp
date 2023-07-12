@@ -1,6 +1,6 @@
 #include "modes/MeleeLimits.hpp"
 
-#define HISTORYLEN 16//changes in target stick position
+#define HISTORYLEN 8//changes in target stick position
 
 #define ANALOG_STICK_MIN 48
 #define ANALOG_DEAD_MIN (128-22)/*this is in the deadzone*/
@@ -54,9 +54,19 @@ typedef struct {
     uint8_t y_start;
     uint8_t x_end;
     uint8_t y_end;
-    uint8_t zone;
-    bool easy;
 } shortstate;
+
+//for sdi nerfs, we want to record only movement between sdi zones, ignoring movement within zones
+typedef struct {
+    uint16_t timestamp;//in samples
+    uint8_t zone;
+} sdizonestate;
+
+//for crouch uptilt, we want to record only crouch
+typedef struct {
+    uint16_t timestamp;
+    int8_t downup;
+} downupstate;
 
 bool isEasy(const uint8_t x, const uint8_t y) {
     //is it in the deadzone?
@@ -131,7 +141,7 @@ uint8_t popcount_zone(const uint8_t bitsIn) {
     return count;
 }
 
-uint8_t isWankSDI(const shortstate coordHistory[HISTORYLEN],
+uint8_t isWankSDI(const sdizonestate zoneHistory[HISTORYLEN],
                const uint8_t currentIndex,
                const uint16_t curTime,
                const uint16_t sampleSpacing) {
@@ -143,15 +153,15 @@ uint8_t isWankSDI(const shortstate coordHistory[HISTORYLEN],
     const uint8_t trueBits = 0b0000'0001;
 
     //is it in a diagonal zone?
-    const uint8_t curZone = coordHistory[currentIndex].zone;
+    const uint8_t curZone = zoneHistory[currentIndex].zone;
 
     uint8_t stepsBack = 1;
     if(popcount_zone(curZone) == 2) {
         //in the past TIMELIMIT_QCIRC has it been to an adjacent diagonal ?
         for(; stepsBack < HISTORYLEN; stepsBack++) {
             const uint8_t testIndex = lookback(currentIndex, stepsBack);
-            const uint8_t prevZone = coordHistory[testIndex].zone;
-            const uint16_t prevTime = coordHistory[testIndex].timestamp;
+            const uint8_t prevZone = zoneHistory[testIndex].zone;
+            const uint16_t prevTime = zoneHistory[testIndex].timestamp;
             if((curTime-prevTime)*sampleSpacing > TIMELIMIT_QCIRC) {
                 //it's not sdi if it was slow enough
                 //return false;
@@ -175,8 +185,8 @@ uint8_t isWankSDI(const shortstate coordHistory[HISTORYLEN],
                         //now we must check to see if, before that, it was the shared cardinal or the current diagonal, within the same time limit
                         for(; stepsBack < HISTORYLEN; stepsBack++) {
                             const uint8_t testIndex2 = lookback(currentIndex, stepsBack);
-                            const uint8_t prevZone2 = coordHistory[testIndex2].zone;
-                            const uint16_t prevTime2 = coordHistory[testIndex2].timestamp;
+                            const uint8_t prevZone2 = zoneHistory[testIndex2].zone;
+                            const uint16_t prevTime2 = zoneHistory[testIndex2].timestamp;
                             if((curTime-prevTime2)*sampleSpacing > TIMELIMIT_QCIRC) {
                                 //it's not sdi if it was slow enough
                                 //return false;
@@ -223,7 +233,7 @@ uint8_t isWankSDI(const shortstate coordHistory[HISTORYLEN],
     }
 }
 
-uint8_t isTapSDI(const shortstate coordHistory[HISTORYLEN],
+uint8_t isTapSDI(const sdizonestate zoneHistory[HISTORYLEN],
                  const uint8_t currentIndex,
                  const bool currentTime,
                  const bool oldA,
@@ -235,8 +245,8 @@ uint8_t isTapSDI(const shortstate coordHistory[HISTORYLEN],
     uint16_t timeList[5];
     for(int i = 0; i < 5; i++) {
         const uint8_t index = lookback(currentIndex, i);
-        zoneList[i] = coordHistory[index].zone;
-        timeList[i] = coordHistory[index].timestamp;
+        zoneList[i] = zoneHistory[index].zone;
+        timeList[i] = zoneHistory[index].timestamp;
     }
     const uint8_t popCur = popcount_zone(zoneList[0]);
     const uint8_t popOne = popcount_zone(zoneList[1]);
@@ -368,6 +378,7 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
 
     static shortstate aHistory[HISTORYLEN];
     static shortstate cHistory[HISTORYLEN];
+    static sdizonestate sdiZoneHist[HISTORYLEN];
 
     static bool initialized = false;
     if(!initialized) {
@@ -380,8 +391,6 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
             aHistory[i].y_start = ANALOG_STICK_NEUTRAL;
             aHistory[i].x_end = ANALOG_STICK_NEUTRAL;
             aHistory[i].y_end = ANALOG_STICK_NEUTRAL;
-            aHistory[i].zone = 0;
-            aHistory[i].easy = true;
             cHistory[i].timestamp = 0;
             cHistory[i].tt = 6;
             cHistory[i].x = ANALOG_STICK_NEUTRAL;
@@ -390,13 +399,14 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
             cHistory[i].y_start = ANALOG_STICK_NEUTRAL;
             cHistory[i].x_end = ANALOG_STICK_NEUTRAL;
             cHistory[i].y_end = ANALOG_STICK_NEUTRAL;
-            cHistory[i].zone = 0;
-            cHistory[i].easy = true;
+            sdiZoneHist[i].timestamp = 0;
+            sdiZoneHist[i].zone = 0;
         }
         initialized = true;
     }
     static uint8_t currentIndexA = 0;
     static uint8_t currentIndexC = 0;
+    static uint8_t currentIndexSDI = 0;
 
     //calculate travel from the previous step
     uint8_t prelimAX;
@@ -445,7 +455,7 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     }
 
     //if it's wank sdi (TODO) or diagonal tap SDI, lock out the cross axis
-    const uint8_t sdi = isTapSDI(aHistory, currentIndexA, currentTime, oldA, sampleSpacing);
+    const uint8_t sdi = isTapSDI(sdiZoneHist, currentIndexA, currentTime, oldA, sampleSpacing);
     static bool wankNerf = false;
     if(sdi & (BITS_SDI_TAP_DIAG | BITS_SDI_TAP_CRDG)){
         if(sdi & (BITS_L | BITS_R)) {
@@ -482,6 +492,16 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
         prelimAY = rawOutputIn.leftStickY;
     }
 
+    //==================================recording history======================================//
+
+    //if we are in a new SDI zone, record the new zone
+    if(sdiZoneHist[currentIndexSDI].zone != zone(rawOutputIn.leftStickX, rawOutputIn.leftStickY)) {
+        currentIndexSDI = (currentIndexSDI + 1) % HISTORYLEN;
+
+        sdiZoneHist[currentIndexSDI].timestamp = currentTime;
+        sdiZoneHist[currentIndexSDI].zone = zone(rawOutputIn.leftStickX, rawOutputIn.leftStickY);
+    }
+
     //if we have a new coordinate, record the new info, the travel time'd locked out stick coordinate, and set travel time
     if(aHistory[currentIndexA].x != rawOutputIn.leftStickX || aHistory[currentIndexA].y != rawOutputIn.leftStickY) {
         oldA = false;
@@ -497,8 +517,6 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
         aHistory[currentIndexA].y_end = yIn;
         aHistory[currentIndexA].x_start = prelimAX;
         aHistory[currentIndexA].y_start = prelimAY;
-        aHistory[currentIndexA].zone = zone(xIn, yIn);
-        aHistory[currentIndexA].easy = isEasy(xIn, yIn);
 
         uint8_t prelimTT = TRAVELTIME_EASY;
         //if cardinal tap SDI
@@ -506,7 +524,7 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
             prelimTT = max(prelimTT, TRAVELTIME_SLOW);
         }
         //if the destination is not an "easy" coordinate
-        if(!aHistory[currentIndexA].easy) {
+        if(!isEasy(xIn, yIn)) {
             prelimTT = max(prelimTT, TRAVELTIME_INTERNAL);
         }
         /*
@@ -540,12 +558,10 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
         cHistory[currentIndexC].y_end = yIn;
         cHistory[currentIndexC].x_start = prelimCX;
         cHistory[currentIndexC].y_start = prelimCY;
-        cHistory[currentIndexC].zone = zone(xIn, yIn);
-        cHistory[currentIndexC].easy = isEasy(xIn, yIn);
 
         uint8_t prelimTT = TRAVELTIME_EASY;
         //if the destination is not an "easy" coordinate
-        if(!cHistory[currentIndexC].easy) {
+        if(!isEasy(xIn, yIn)) {
             prelimTT = max(prelimTT, TRAVELTIME_INTERNAL);
         }
         /*
@@ -559,6 +575,8 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
         */
         cHistory[currentIndexC].tt = prelimTT;
     }
+
+    //===============================applying the nerfed coords=================================//
     finalOutput.a               = rawOutputIn.a;//TODO prelimAButton
     finalOutput.b               = rawOutputIn.b;
     finalOutput.x               = rawOutputIn.x;
