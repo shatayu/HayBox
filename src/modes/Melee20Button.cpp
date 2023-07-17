@@ -174,7 +174,7 @@ void Melee20Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
         }
 
         // Angled fsmash
-        if (directions.cx != 0) {
+        if (directions.cx != 0 && directions.y != 0) {
             // 8500 5250 = 68 42
             outputs.rightStickX = 128 + (directions.cx * 68);
             outputs.rightStickY = 128 + (directions.y * 42);

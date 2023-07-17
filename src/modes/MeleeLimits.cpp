@@ -335,14 +335,22 @@ void travelTimeCalc(const uint16_t samplesElapsed,
     }
     const uint16_t timeElapsed = samplesElapsed*sampleSpacing;//units of 4 us
     const uint16_t travelTimeElapsed = timeElapsed/msTravel;//250 times the fraction of the travel time elapsed
-    const uint16_t cappedTT = min(250, travelTimeElapsed);
 
-    const int16_t dX = ((destX-startX)*cappedTT)/250;
-    const int16_t dY = ((destY-startY)*cappedTT)/250;
+    //For the following 256s, they used to be 250, but AVR had division issues
+    // and would only be able to reach a value of 6 when returning to neutral,
+    // from the right only.
+    //Switching to 256 fixed it somehow, at the expense of 2.4% greater travel time.
+    const uint16_t cappedTT = min(256, travelTimeElapsed);
+
+    const int16_t dX = ((destX-startX)*cappedTT)/256;
+    const int16_t dY = ((destY-startY)*cappedTT)/256;
+
     const uint16_t newX = startX+dX;
     const uint16_t newY = startY+dY;
+
     outX = (uint8_t) newX;
     outY = (uint8_t) newY;
+
     if(oldChange || msTravel == 0) {
         outX = destX;
         outY = destY;
