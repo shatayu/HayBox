@@ -118,8 +118,9 @@ void setup() {
     gpio_put(PICO_DEFAULT_LED_PIN, 1);
 
     // Debug output for timing stuff on gp1
-    gpio_init(1);
-    gpio_set_dir(1, GPIO_OUT);
+    // Rana Digital actually uses gp1 so we can't
+    //gpio_init(1);
+    //gpio_set_dir(1, GPIO_OUT);
 
     // Create array of input sources to be used.
     static InputSource *input_sources[] = { gpio_input };
