@@ -442,6 +442,15 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
                    prelimCX,
                    prelimCY);
 
+    //If we're doing a diagonal airdodge, make travel time instant to prevent inconsistent wavedash angles
+    //this only fully works for neutral socd right now
+    //this is a catchall to force the latest output
+    //however, we do want to make it be overridden by the sdi nerfs so this happens first
+    if((inputs.left != inputs.right) && (inputs.down != inputs.up) && inputs.down && (inputs.r || inputs.l)) {
+        prelimAX = rawOutputIn.leftStickX;
+        prelimAY = rawOutputIn.leftStickY;
+    }
+
     //if it's a pivot downtilt coordinate, lock out A //TODO
 
     //if it's a pivot uptilt coordinate, make Y jump //TODO
@@ -490,14 +499,6 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     } else if(wankNerf) {
         aHistory[currentIndexA].x_end = aHistory[currentIndexA].x;
         aHistory[currentIndexA].y_end = aHistory[currentIndexA].y;
-    }
-
-    //If we're doing a diagonal airdodge, make travel time instant to prevent inconsistent wavedash angles
-    //this only fully works for neutral socd right now
-    //this is a catchall to force the latest output
-    if((inputs.left != inputs.right) && (inputs.down != inputs.up) && inputs.down && (inputs.r || inputs.l)) {
-        prelimAX = rawOutputIn.leftStickX;
-        prelimAY = rawOutputIn.leftStickY;
     }
 
     //==================================recording history======================================//
