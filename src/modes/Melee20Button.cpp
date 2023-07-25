@@ -77,7 +77,7 @@ void Melee20Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
         // degree wavedash). Also used as default q3/4 diagonal if crouch walk option select is
         // enabled.
         if (directions.y == -1 && (shield_button_pressed || _options.crouch_walk_os)) {
-            outputs.leftStickX = 128 + (directions.x * 56);
+            outputs.leftStickX = 128 + (directions.x * 57);
             outputs.leftStickY = 128 + (directions.y * 55);
         }
     }
