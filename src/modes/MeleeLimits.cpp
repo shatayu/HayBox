@@ -1,6 +1,6 @@
 #include "modes/MeleeLimits.hpp"
 
-#define HISTORYLEN 8//changes in target stick position
+#define HISTORYLEN 5//changes in target stick position
 
 #define ANALOG_STICK_MIN 48
 #define ANALOG_DEAD_MIN (128-22)/*this is in the deadzone*/
@@ -60,6 +60,7 @@ typedef struct {
 typedef struct {
     uint16_t timestamp;//in samples
     uint8_t zone;
+    bool stale;
 } sdizonestate;
 
 //for crouch uptilt, we want to record only crouch
@@ -102,7 +103,7 @@ uint8_t lookback(const uint8_t currentIndex,
 //0b0000'1000 for right
 //no bits set for neutral
 //thresholds are dash for cardinals, and deadzone for diagonals
-uint8_t zone(const uint8_t x, const uint8_t y) {
+uint8_t sdiZone(const uint8_t x, const uint8_t y) {
     uint8_t result = 0b0000'0000;
     if(x >= ANALOG_DEAD_MIN && x <= ANALOG_DEAD_MAX) {
         if(y < ANALOG_DEAD_MIN) {
@@ -236,17 +237,18 @@ uint8_t isWankSDI(const sdizonestate zoneHistory[HISTORYLEN],
 uint8_t isTapSDI(const sdizonestate zoneHistory[HISTORYLEN],
                  const uint8_t currentIndex,
                  const bool currentTime,
-                 const bool oldA,
                  const uint16_t sampleSpacing) {
     uint8_t output = 0;
 
     //grab the last five zones
-    uint8_t zoneList[5];
-    uint16_t timeList[5];
-    for(int i = 0; i < 5; i++) {
+    uint8_t zoneList[HISTORYLEN];
+    uint16_t timeList[HISTORYLEN];
+    bool staleList[HISTORYLEN];
+    for(int i = 0; i < HISTORYLEN; i++) {
         const uint8_t index = lookback(currentIndex, i);
         zoneList[i] = zoneHistory[index].zone;
         timeList[i] = zoneHistory[index].timestamp;
+        staleList[i] = zoneHistory[index].stale;
     }
     const uint8_t popCur = popcount_zone(zoneList[0]);
     const uint8_t popOne = popcount_zone(zoneList[1]);
@@ -259,7 +261,7 @@ uint8_t isTapSDI(const sdizonestate zoneHistory[HISTORYLEN],
         const uint16_t timeDiff1 = (timeList[0] - timeList[2])*sampleSpacing;//rising edge to rising edge, or falling edge to falling edge
         //const uint16_t timeDiff2 = (timeList[0] - timeList[1])*sampleSpacing;//rising to falling, or falling to rising
         //We want to nerf it if there is more than one press every 6 frames, but not if the previous press or release duration is less than 1 frame
-        if(!oldA && timeDiff0 < TIMELIMIT_TAP_PLUS && timeDiff1 < TIMELIMIT_TAP && timeDiff0 > TIMELIMIT_DEBOUNCE) {
+        if(!staleList[3] && (timeDiff0 < TIMELIMIT_TAP_PLUS && timeDiff1 < TIMELIMIT_TAP && timeDiff0 > TIMELIMIT_DEBOUNCE)) {
             if((zoneList[0] == 0) || (zoneList[1] == 0)) {//if one of the pairs of zones is zero, it's tapping a cardinal
                 output = output | BITS_SDI_TAP_CARD;
             } else if(popCur+popOne == 3) { //one is cardinal and the other is diagonal
@@ -270,23 +272,22 @@ uint8_t isTapSDI(const sdizonestate zoneHistory[HISTORYLEN],
     //detect:
     //         center-cardinal-diagonal-center-cardinal (-diagonal)
     //center-cardinal-diagonal-cardinal-center-cardinal (-diagonal)
-    //where the cardinals are the same, and the diagonals are the same
+    //where the the diagonals are the same
+    //the cardinals don't have to be the same in case they're inputting 2365 etc
 
     //simpler: if the last 5 inputs are in the origin, one cardinal, and one diagonal
     //and that there was a recent return to center
-    //at least one of each zone, no more than 3 zones total
-    uint8_t cardZone = 0b1111'1111;
+    //at least one of each zone, and at least two diagonals
     uint8_t diagZone = 0b1111'1111;
     uint8_t origCount = 0;
     uint8_t cardCount = 0;
     uint8_t diagCount = 0;
-    for(int i = 0; i < 5; i++) {
+    for(int i = 0; i < HISTORYLEN; i++) {
         const uint8_t popcnt = popcount_zone(zoneList[i]);
         if(popcnt == 0) {
             origCount++;
         } else if(popcnt == 1) {
             cardCount++;
-            cardZone = cardZone & zoneList[i];//if two of these don't match, it'll be zero
         } else {
             diagCount++;
             diagZone = diagZone & zoneList[i];//if two of these don't match, it'll have zero or one bits set
@@ -297,21 +298,25 @@ uint8_t isTapSDI(const sdizonestate zoneHistory[HISTORYLEN],
     //check whether it returned to center recently
     //const bool recentOrig = (zoneList[1] & zoneList[2]) == 0;//may be too lenient in case people throw in modifier taps?
     //check whether the input was fast enough
-    const bool shortTime = (timeList[0] - timeList[4])*sampleSpacing < TIMELIMIT_CARDIAG && !oldA;
+    const bool shortTime = ((timeList[0] - timeList[4])*sampleSpacing < TIMELIMIT_CARDIAG) && !staleList[4];
 
     //if it hit only one cardinal
     //             if only the same diagonal was pressed
     //                          if the origin, cardinal, and diagonal were all entered
     //                                                                 if there were either two cardinals or two origins (to prevent dash-diagonal-mod from triggering this)
     //                                                                                                     within the time limit
-    if(cardZone && diagMatch && origCount && cardCount && diagCount && (origCount > 1 || cardCount > 1) && shortTime) {
+    if(diagMatch && origCount && cardCount && diagCount > 1 && shortTime) {
         output = output | BITS_SDI_TAP_CRDG;
     }
 
-    //return the last cardinal in the zone list, useful for SDI diagonal nerfs.
+    //return the last cardinal in the zone list before the last diagonal, useful for SDI diagonal nerfs.
+    bool lookNow = false;
     bool alreadyWritten = false;
     for(int i = 0; i < 5; i++) {
-        if((popcount_zone(zoneList[i]) == 1) && !alreadyWritten) {
+        if((popcount_zone(zoneList[i]) == 2) && !alreadyWritten) {
+            lookNow = true;
+        }
+        if((popcount_zone(zoneList[i]) == 1) && !alreadyWritten && lookNow) {
             output = output | zoneList[i];
             alreadyWritten = true;
         }
@@ -409,6 +414,7 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
             cHistory[i].y_end = ANALOG_STICK_NEUTRAL;
             sdiZoneHist[i].timestamp = 0;
             sdiZoneHist[i].zone = 0;
+            sdiZoneHist[i].stale = true;
         }
         initialized = true;
     }
@@ -472,7 +478,7 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     }
 
     //if it's wank sdi (TODO) or diagonal tap SDI, lock out the cross axis
-    const uint8_t sdi = isTapSDI(sdiZoneHist, currentIndexA, currentTime, oldA, sampleSpacing);
+    const uint8_t sdi = isTapSDI(sdiZoneHist, currentIndexA, currentTime, sampleSpacing);
     static bool wankNerf = false;
     if(sdi & (BITS_SDI_TAP_DIAG | BITS_SDI_TAP_CRDG)){
         if(sdi & (BITS_L | BITS_R)) {
@@ -496,6 +502,15 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
             aHistory[currentIndexA].y_end = prelimAY;
             wankNerf = true;
         }//one or the other should occur
+        /*
+        //debug to see if SDI was detected
+        if(sdi & BITS_SDI_TAP_DIAG) {
+            prelimCX = 200;
+        }
+        if(sdi & BITS_SDI_TAP_CRDG) {
+            prelimCY = 200;
+        }
+        */
     } else if(wankNerf) {
         aHistory[currentIndexA].x_end = aHistory[currentIndexA].x;
         aHistory[currentIndexA].y_end = aHistory[currentIndexA].y;
@@ -504,11 +519,17 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     //==================================recording history======================================//
 
     //if we are in a new SDI zone, record the new zone
-    if(sdiZoneHist[currentIndexSDI].zone != zone(rawOutputIn.leftStickX, rawOutputIn.leftStickY)) {
+    if(sdiZoneHist[currentIndexSDI].zone != sdiZone(rawOutputIn.leftStickX, rawOutputIn.leftStickY)) {
         currentIndexSDI = (currentIndexSDI + 1) % HISTORYLEN;
 
         sdiZoneHist[currentIndexSDI].timestamp = currentTime;
-        sdiZoneHist[currentIndexSDI].zone = zone(rawOutputIn.leftStickX, rawOutputIn.leftStickY);
+        sdiZoneHist[currentIndexSDI].zone = sdiZone(rawOutputIn.leftStickX, rawOutputIn.leftStickY);
+        sdiZoneHist[currentIndexSDI].stale = false;
+    }
+    for(int i = 0; i < HISTORYLEN; i++) {
+        if(currentTime-sdiZoneHist[i].timestamp > 8*16*2) {//8 frames * 16 ms * max 2 samples
+            sdiZoneHist[i].stale = true;
+        }
     }
 
     //if we have a new coordinate, record the new info, the travel time'd locked out stick coordinate, and set travel time
