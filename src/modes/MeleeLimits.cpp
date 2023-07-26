@@ -241,10 +241,11 @@ uint8_t isTapSDI(const sdizonestate zoneHistory[HISTORYLEN],
     uint8_t output = 0;
 
     //grab the last five zones
-    uint8_t zoneList[HISTORYLEN];
-    uint16_t timeList[HISTORYLEN];
-    bool staleList[HISTORYLEN];
-    for(int i = 0; i < HISTORYLEN; i++) {
+    const uint8_t historyLength = min(5, HISTORYLEN);
+    uint8_t zoneList[historyLength];
+    uint16_t timeList[historyLength];
+    bool staleList[historyLength];
+    for(int i = 0; i < historyLength; i++) {
         const uint8_t index = lookback(currentIndex, i);
         zoneList[i] = zoneHistory[index].zone;
         timeList[i] = zoneHistory[index].timestamp;
@@ -282,7 +283,7 @@ uint8_t isTapSDI(const sdizonestate zoneHistory[HISTORYLEN],
     uint8_t origCount = 0;
     uint8_t cardCount = 0;
     uint8_t diagCount = 0;
-    for(int i = 0; i < HISTORYLEN; i++) {
+    for(int i = 0; i < historyLength; i++) {
         const uint8_t popcnt = popcount_zone(zoneList[i]);
         if(popcnt == 0) {
             origCount++;
@@ -312,7 +313,7 @@ uint8_t isTapSDI(const sdizonestate zoneHistory[HISTORYLEN],
     //return the last cardinal in the zone list before the last diagonal, useful for SDI diagonal nerfs.
     bool lookNow = false;
     bool alreadyWritten = false;
-    for(int i = 0; i < 5; i++) {
+    for(int i = 0; i < historyLength; i++) {
         if((popcount_zone(zoneList[i]) == 2) && !alreadyWritten) {
             lookNow = true;
         }
