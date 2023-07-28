@@ -48,7 +48,7 @@ void GamecubeBackend::SendReport() {
     const uint fastestLoop = 450; //fastest possible loop for rp2040
 
     oldSampleTime = newSampleTime;
-    //YOU CANNOT USE MICROS
+    //YOU CANNOT USE MICROS ON AVR
     //You need to manually use the low level timers
     newSampleTime = micros();
     loopTime = newSampleTime - oldSampleTime;
@@ -105,6 +105,7 @@ void GamecubeBackend::SendReport() {
                 //APPLY NERFS HERE
                 OutputState nerfedOutputs;
                 limitOutputs(sampleSpacing/4, _inputs, _outputs, nerfedOutputs);
+
                 // Digital outputs
                 _report.a = nerfedOutputs.a;
                 _report.b = nerfedOutputs.b;

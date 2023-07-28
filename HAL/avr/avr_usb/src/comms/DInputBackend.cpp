@@ -5,7 +5,7 @@
 
 #include <Joystick.h>
 
-DInputBackend::DInputBackend(InputSource **input_sources, size_t input_source_count)
+DInputBackend::DInputBackend(InputSource **input_sources, size_t input_source_count, bool nerfOn)
     : CommunicationBackend(input_sources, input_source_count) {
     _joystick = new Joystick_(
         JOYSTICK_DEFAULT_REPORT_ID,
@@ -24,6 +24,8 @@ DInputBackend::DInputBackend(InputSource **input_sources, size_t input_source_co
         false, // No brake
         false // No steering
     );
+
+    _nerfOn = nerfOn;
 
     _joystick->begin(false);
     _joystick->setXAxisRange(0, 255);
