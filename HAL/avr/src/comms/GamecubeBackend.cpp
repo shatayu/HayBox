@@ -1,33 +1,14 @@
 #include "comms/GamecubeBackend.hpp"
-
-#include "modes/MeleeLimits.hpp"
+#include "comms/hwtimer.hpp"
 
 #include "core/ControllerMode.hpp"
 #include "core/InputSource.hpp"
 
+#include "modes/MeleeLimits.hpp"
+
 #include <Nintendo.h>
 
 //#define TIMINGDEBUG
-
-void zeroTcnt1() {
-    //Disable interrupts
-    noInterrupts();
-    //Set TCNT1
-    TCNT1 = 0;
-    //Restore interrupts
-    interrupts();
-}
-
-uint16_t readTcnt1() {
-    //Disable interrupts
-    noInterrupts();
-    //Set TCNT1
-    uint16_t i;
-    i = TCNT1;
-    //Restore interrupts
-    interrupts();
-    return i;
-}
 
 GamecubeBackend::GamecubeBackend(
     InputSource **input_sources,

@@ -73,10 +73,7 @@ void DInputBackend::SendReport() {
             }
         }
     } else {
-        //run the delay procedure based on samplespacing
-        //in the stock arduino software, it samples 850 us after the end of the poll response
-        //we want the last sample to begin [850 + extra computation time] before the beginning of the last poll to give room for the sample and the travel time+nerf computation
-        //
+        //no delay stuff here
         for (uint i = 0; i < sampleCount; i++) {
             ScanInputs(InputScanSpeed::FAST);
 
