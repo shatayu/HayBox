@@ -2,8 +2,6 @@
 
 This is a firmware designed for experimenting with travel time and other subframe nerfs for Melee based on Haystack's HayBox.
 
-Currently, the nerfs only apply when attached via a Gamecube cable, not over USB.
-
 The nerfs are subject to change, but in addition to that it offers several features:
 
 Arduino-based boxes will work at the same latency regardless of polling rate, as long as the poll spacing is constant.
