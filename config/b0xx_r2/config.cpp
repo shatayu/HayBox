@@ -76,7 +76,7 @@ void setup() {
     else
         digitalWrite(pinout.mux, HIGH);
 
-    CommunicationBackend *primary_backend = new DInputBackend(input_sources, input_source_count);
+    CommunicationBackend *primary_backend = new DInputBackend(input_sources, input_source_count, !button_holds.a);
     delay(500);
     bool usb_connected = UDADDR & _BV(ADDEN);
 

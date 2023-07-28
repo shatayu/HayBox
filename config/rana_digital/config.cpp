@@ -146,14 +146,14 @@ void setup() {
             TUGamepad::registerDescriptor();
             TUKeyboard::registerDescriptor();
             backend_count = 2;
-            primary_backend = new DInputBackend(input_sources, input_source_count);
+            primary_backend = new DInputBackend(input_sources, input_source_count, !button_holds.a);
             backends = new CommunicationBackend *[backend_count] {
                 primary_backend, new B0XXInputViewer(input_sources, input_source_count)
             };
         } else {
             // Default to XInput mode if no console detected and no other mode forced.
             backend_count = 2;
-            primary_backend = new XInputBackend(input_sources, input_source_count);
+            primary_backend = new XInputBackend(input_sources, input_source_count, !button_holds.a);
             backends = new CommunicationBackend *[backend_count] {
                 primary_backend, new B0XXInputViewer(input_sources, input_source_count)
             };

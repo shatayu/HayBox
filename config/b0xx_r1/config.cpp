@@ -67,7 +67,7 @@ void setup() {
     static InputSource *input_sources[] = { gpio_input, nunchuk };
     size_t input_source_count = sizeof(input_sources) / sizeof(InputSource *);
 
-    CommunicationBackend *primary_backend = new DInputBackend(input_sources, input_source_count);
+    CommunicationBackend *primary_backend = new DInputBackend(input_sources, input_source_count, !button_holds.a);
     delay(500);
     bool usb_connected = UDADDR & _BV(ADDEN);
 
