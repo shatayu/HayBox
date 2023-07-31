@@ -5,7 +5,7 @@
 #define ANALOG_STICK_MAX 208
 
 Melee20Button::Melee20Button(socd::SocdType socd_type, Melee20ButtonOptions options)
-    : ControllerMode(socd_type) {
+    : ControllerMode(MELEE_SOCD) {
     _socd_pair_count = 4;
     _socd_pairs = new socd::SocdPair[_socd_pair_count]{
         socd::SocdPair{&InputState::left,    &InputState::right  },
@@ -77,7 +77,7 @@ void Melee20Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
         // degree wavedash). Also used as default q3/4 diagonal if crouch walk option select is
         // enabled.
         if (directions.y == -1 && (shield_button_pressed || _options.crouch_walk_os)) {
-            outputs.leftStickX = 128 + (directions.x * 56);
+            outputs.leftStickX = 128 + (directions.x * 57);
             outputs.leftStickY = 128 + (directions.y * 55);
         }
     }
@@ -91,22 +91,10 @@ void Melee20Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
         if (directions.vertical) {
             outputs.leftStickY = 128 + (directions.y * 43);
         }
-        if (directions.diagonal) {
-            // MX + q1/2/3/4 = 7375 3125 = 59 25
-            outputs.leftStickX = 128 + (directions.x * 59);
-            outputs.leftStickY = 128 + (directions.y * 25);
-            if (shield_button_pressed) {
-                // MX + L, R, LS, and MS + q1/2/3/4 = 6375 3750 = 51 30
-                outputs.leftStickX = 128 + (directions.x * 51);
-                outputs.leftStickY = 128 + (directions.y * 30);
-            }
-        }
-
-        // Angled fsmash
-        if (directions.cx != 0) {
-            // 8500 5250 = 68 42
-            outputs.rightStickX = 128 + (directions.cx * 68);
-            outputs.rightStickY = 128 + (directions.y * 42);
+        if (directions.diagonal && shield_button_pressed) {
+            // MX + L, R, LS, and MS + q1/2/3/4 = 6375 3750 = 51 30
+            outputs.leftStickX = 128 + (directions.x * 51);
+            outputs.leftStickY = 128 + (directions.y * 30);
         }
 
         /* Up B angles */
@@ -115,24 +103,46 @@ void Melee20Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
             outputs.leftStickX = 128 + (directions.x * 59);
             outputs.leftStickY = 128 + (directions.y * 25);
             // 27.37104 - 7000 3625 (27.38) = 56 29
-            if (inputs.c_down) {
-                outputs.leftStickX = 128 + (directions.x * 56);
-                outputs.leftStickY = 128 + (directions.y * 29);
-            }
-            // 31.77828 - 7875 4875 (31.76) = 63 39
-            if (inputs.c_left) {
-                outputs.leftStickX = 128 + (directions.x * 63);
-                outputs.leftStickY = 128 + (directions.y * 39);
-            }
-            // 36.18552 - 7000 5125 (36.21) = 56 41
-            if (inputs.c_up) {
-                outputs.leftStickX = 128 + (directions.x * 56);
-                outputs.leftStickY = 128 + (directions.y * 41);
-            }
-            // 40.59276 - 6125 5250 (40.6) = 49 42
-            if (inputs.c_right) {
-                outputs.leftStickX = 128 + (directions.x * 49);
-                outputs.leftStickY = 128 + (directions.y * 42);
+            if (!_options.teleport_coords) {
+                if (inputs.c_down) {
+                    outputs.leftStickX = 128 + (directions.x * 56);
+                    outputs.leftStickY = 128 + (directions.y * 29);
+                }
+                // 31.77828 - 7875 4875 (31.76) = 63 39
+                if (inputs.c_left) {
+                    outputs.leftStickX = 128 + (directions.x * 63);
+                    outputs.leftStickY = 128 + (directions.y * 39);
+                }
+                // 36.18552 - 7000 5125 (36.21) = 56 41
+                if (inputs.c_up) {
+                    outputs.leftStickX = 128 + (directions.x * 56);
+                    outputs.leftStickY = 128 + (directions.y * 41);
+                }
+                // 40.59276 - 6125 5250 (40.6) = 49 42
+                if (inputs.c_right) {
+                    outputs.leftStickX = 128 + (directions.x * 49);
+                    outputs.leftStickY = 128 + (directions.y * 42);
+                }
+            } else {//roughly 0.8 magnitude for uniform shorter teleports
+                if (inputs.c_down) {
+                    outputs.leftStickX = 128 + (directions.x * 57);
+                    outputs.leftStickY = 128 + (directions.y * 30);
+                }
+                // 31.77828 - 7875 4875 (31.76) = 63 39
+                if (inputs.c_left) {
+                    outputs.leftStickX = 128 + (directions.x * 55);
+                    outputs.leftStickY = 128 + (directions.y * 34);
+                }
+                // 36.18552 - 7000 5125 (36.21) = 56 41
+                if (inputs.c_up) {
+                    outputs.leftStickX = 128 + (directions.x * 52);
+                    outputs.leftStickY = 128 + (directions.y * 38);
+                }
+                // 40.59276 - 6125 5250 (40.6) = 49 42
+                if (inputs.c_right) {
+                    outputs.leftStickX = 128 + (directions.x * 49);
+                    outputs.leftStickY = 128 + (directions.y * 42);
+                }
             }
 
             /* Extended Up B Angles */
@@ -162,6 +172,13 @@ void Melee20Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
                 }
             }
         }
+
+        // Angled fsmash
+        if (directions.cx != 0 && directions.y != 0) {
+            // 8500 5250 = 68 42
+            outputs.rightStickX = 128 + (directions.cx * 68);
+            outputs.rightStickY = 128 + (directions.y * 42);
+        }
     }
 
     if (inputs.mod_y) {
@@ -173,19 +190,14 @@ void Melee20Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
         if (directions.vertical) {
             outputs.leftStickY = 128 + (directions.y * 59);
         }
-        if (directions.diagonal) {
-            // MY + q1/2/3/4 = 3125 7375 = 25 59
-            outputs.leftStickX = 128 + (directions.x * 25);
-            outputs.leftStickY = 128 + (directions.y * 59);
-            if (shield_button_pressed) {
-                // MY + L, R, LS, and MS + q1/2 = 4750 8750 = 38 70
-                outputs.leftStickX = 128 + (directions.x * 38);
-                outputs.leftStickY = 128 + (directions.y * 70);
-                // MY + L, R, LS, and MS + q3/4 = 5000 8500 = 40 68
-                if (directions.y == -1) {
-                    outputs.leftStickX = 128 + (directions.x * 40);
-                    outputs.leftStickY = 128 + (directions.y * 68);
-                }
+        if (directions.diagonal && shield_button_pressed) {
+            // MY + L, R, LS, and MS + q1/2 = 4750 8750 = 38 70
+            outputs.leftStickX = 128 + (directions.x * 38);
+            outputs.leftStickY = 128 + (directions.y * 70);
+            // MY + L, R, LS, and MS + q3/4 = 5000 8500 = 40 68
+            if (directions.y == -1) {
+                outputs.leftStickX = 128 + (directions.x * 40);
+                outputs.leftStickY = 128 + (directions.y * 68);
             }
         }
 
@@ -200,24 +212,46 @@ void Melee20Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
             outputs.leftStickX = 128 + (directions.x * 25);
             outputs.leftStickY = 128 + (directions.y * 59);
             // 62.62896 - 3625 7000 (62.62) = 29 56
-            if (inputs.c_down) {
-                outputs.leftStickX = 128 + (directions.x * 29);
-                outputs.leftStickY = 128 + (directions.y * 56);
-            }
-            // 58.22172 - 4875 7875 (58.24) = 39 63
-            if (inputs.c_left) {
-                outputs.leftStickX = 128 + (directions.x * 39);
-                outputs.leftStickY = 128 + (directions.y * 63);
-            }
-            // 53.81448 - 5125 7000 (53.79) = 41 56
-            if (inputs.c_up) {
-                outputs.leftStickX = 128 + (directions.x * 41);
-                outputs.leftStickY = 128 + (directions.y * 56);
-            }
-            // 49.40724 - 6375 7625 (50.10) = 51 61
-            if (inputs.c_right) {
-                outputs.leftStickX = 128 + (directions.x * 51);
-                outputs.leftStickY = 128 + (directions.y * 61);
+            if (!_options.teleport_coords) {
+                if (inputs.c_down) {
+                    outputs.leftStickX = 128 + (directions.x * 29);
+                    outputs.leftStickY = 128 + (directions.y * 56);
+                }
+                // 58.22172 - 4875 7875 (58.24) = 39 63
+                if (inputs.c_left) {
+                    outputs.leftStickX = 128 + (directions.x * 39);
+                    outputs.leftStickY = 128 + (directions.y * 63);
+                }
+                // 53.81448 - 5125 7000 (53.79) = 41 56
+                if (inputs.c_up) {
+                    outputs.leftStickX = 128 + (directions.x * 41);
+                    outputs.leftStickY = 128 + (directions.y * 56);
+                }
+                // 49.40724 - 6375 7625 (50.10) = 51 61
+                if (inputs.c_right) {
+                    outputs.leftStickX = 128 + (directions.x * 51);
+                    outputs.leftStickY = 128 + (directions.y * 61);
+                }
+            } else {//roughly 0.8 magnitude for uniform shorter teleports
+                if (inputs.c_down) {
+                    outputs.leftStickX = 128 + (directions.x * 30);
+                    outputs.leftStickY = 128 + (directions.y * 57);
+                }
+                // 58.22172 - 4875 7875 (58.24) = 39 63
+                if (inputs.c_left) {
+                    outputs.leftStickX = 128 + (directions.x * 35);
+                    outputs.leftStickY = 128 + (directions.y * 57);
+                }
+                // 53.81448 - 5125 7000 (53.79) = 41 56
+                if (inputs.c_up) {
+                    outputs.leftStickX = 128 + (directions.x * 38);
+                    outputs.leftStickY = 128 + (directions.y * 52);
+                }
+                // 49.40724 - 6375 7625 (50.10) = 51 61
+                if (inputs.c_right) {
+                    outputs.leftStickX = 128 + (directions.x * 41);
+                    outputs.leftStickY = 128 + (directions.y * 50);
+                }
             }
 
             /* Extended Up B Angles */
@@ -273,7 +307,6 @@ void Melee20Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
     if (outputs.triggerLDigital) {
         outputs.triggerLAnalog = 140;
     }
-
     if (outputs.triggerRDigital) {
         outputs.triggerRAnalog = 140;
     }

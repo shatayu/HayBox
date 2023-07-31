@@ -4,9 +4,11 @@
 #include "core/ControllerMode.hpp"
 #include "core/socd.hpp"
 #include "core/state.hpp"
+#include "MeleeLimits.hpp"
 
 typedef struct {
     bool crouch_walk_os = false;
+    bool teleport_coords = false;
 } Melee20ButtonOptions;
 
 class Melee20Button : public ControllerMode {

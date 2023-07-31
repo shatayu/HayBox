@@ -4,6 +4,7 @@
 #include "core/ControllerMode.hpp"
 #include "core/socd.hpp"
 #include "core/state.hpp"
+#include "MeleeLimits.hpp"
 
 typedef struct {
     bool crouch_walk_os = false;

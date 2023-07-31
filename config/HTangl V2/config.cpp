@@ -5,10 +5,12 @@
 #include "config/mode_selection.hpp"
 #include "core/CommunicationBackend.hpp"
 #include "core/InputMode.hpp"
+#include "core/KeyboardMode.hpp"
 #include "core/pinout.hpp"
 #include "core/socd.hpp"
 #include "core/state.hpp"
 #include "input/GpioButtonInput.hpp"
+#include "input/NunchukInput.hpp"
 #include "modes/Melee20Button.hpp"
 #include "stdlib.hpp"
 
@@ -16,45 +18,86 @@ CommunicationBackend **backends = nullptr;
 size_t backend_count;
 KeyboardMode *current_kb_mode = nullptr;
 
+/*
+//rin~ swap the right hand rows, some other remaps
+#define ALTMAP \
+    {&InputState::l,            0},\
+    { &InputState::left,        7 },\
+    { &InputState::down,        11},\
+    { &InputState::right,       5 },\
+\
+    { &InputState::mod_x,       9 },\
+    { &InputState::mod_y,       A1},\
+\
+    { &InputState::select,      2 },\
+    { &InputState::start,       1 },\
+    { &InputState::home,        3 },\
+\
+    { &InputState::c_left,      A3},\
+    { &InputState::c_up,        A4},\
+    { &InputState::c_down,      A0},\
+    { &InputState::a,           10},\
+    { &InputState::c_right,     A2},\
+\
+    { &InputState::b,           16 },\
+    { &InputState::x,           4 },\
+    { &InputState::z,           8 },\
+    { &InputState::up,          12 },\
+\
+    { &InputState::r,           6},\
+    { &InputState::y,           A5},\
+    { &InputState::lightshield, 14},\
+    { &InputState::midshield,   15},
+*/
+
 GpioButtonMapping button_mappings[] = {
-    {&InputState::l,            15},
-    { &InputState::left,        16},
-    { &InputState::down,        14},
-    { &InputState::right,       3 },
-    { &InputState::mod_x,       2 },
-    { &InputState::mod_y,       0 },
+#ifndef ALTMAP
+    {&InputState::l,            12},
+    { &InputState::left,        7 },
+    { &InputState::down,        11},
+    { &InputState::right,       5 },
 
-    { &InputState::select,      1 },
-    { &InputState::start,       4 },
-    { &InputState::home,        12},
+    { &InputState::mod_x,       9 },
+    { &InputState::mod_y,       A1},
 
-    { &InputState::c_left,      8 },
-    { &InputState::c_up,        10},
-    { &InputState::c_down,      6 },
-    { &InputState::a,           9 },
-    { &InputState::c_right,     5 },
+    { &InputState::select,      2 },
+    { &InputState::start,       1 },
+    { &InputState::home,        3 },
 
-    { &InputState::b,           A2},
-    { &InputState::x,           A1},
-    { &InputState::z,           A0},
-    { &InputState::up,          13},
+    { &InputState::c_left,      A3},
+    { &InputState::c_up,        A4},
+    { &InputState::c_down,      A0},
+    { &InputState::a,           10},
+    { &InputState::c_right,     A2},
 
-    { &InputState::r,           7 },
-    { &InputState::y,           A5},
-    { &InputState::lightshield, A4},
-    { &InputState::midshield,   A3},
+    { &InputState::b,           0 },
+    { &InputState::x,           4 },
+    { &InputState::z,           6 },
+    { &InputState::up,          8 },
+
+    { &InputState::r,           16},
+    { &InputState::y,           15},
+    { &InputState::lightshield, A5},
+    { &InputState::midshield,   14},
+#else
+ALTMAP
+#endif
 };
 size_t button_count = sizeof(button_mappings) / sizeof(GpioButtonMapping);
 
 Pinout pinout = {
-    .joybus_data = 17,
-    .mux = 11,
+    .joybus_data = 13,
+    .mux = -1,
     .nunchuk_detect = -1,
     .nunchuk_sda = -1,
     .nunchuk_scl = -1,
 };
 
 void setup() {
+    // Create Nunchuk input source - must be done before GPIO input source otherwise it would
+    // disable the pullups on the i2c pins.
+    NunchukInput *nunchuk = new NunchukInput();
+
     // Create GPIO input source and use it to read button states for checking button holds.
     GpioButtonInput *gpio_input = new GpioButtonInput(button_mappings, button_count);
 
@@ -62,15 +105,8 @@ void setup() {
     gpio_input->UpdateInputs(button_holds);
 
     // Create array of input sources to be used.
-    static InputSource *input_sources[] = { gpio_input };
+    static InputSource *input_sources[] = { gpio_input, nunchuk };
     size_t input_source_count = sizeof(input_sources) / sizeof(InputSource *);
-
-    // Hold B on plugin for Brook board mode.
-    pinMode(pinout.mux, OUTPUT);
-    if (button_holds.b)
-        digitalWrite(pinout.mux, HIGH);
-    else
-        digitalWrite(pinout.mux, LOW);
 
     CommunicationBackend *primary_backend = new DInputBackend(input_sources, input_source_count, !button_holds.a);
     delay(500);
@@ -86,11 +122,7 @@ void setup() {
         };
     } else {
         delete primary_backend;
-        if (button_holds.c_left) {
-            // Hold C-Left on plugin for N64.
-            primary_backend =
-                new N64Backend(input_sources, input_source_count, 60, pinout.joybus_data);
-        } else if (button_holds.a) {
+        if (button_holds.a) {
             // Hold A on plugin for GameCube adapter.
             primary_backend =
                 new GamecubeBackend(input_sources, input_source_count, 0, pinout.joybus_data);

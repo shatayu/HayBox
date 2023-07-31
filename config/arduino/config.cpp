@@ -85,9 +85,19 @@ void setup() {
     backend_count = 1;
     backends = new CommunicationBackend *[backend_count] { primary_backend };
 
+    bool use_teleport = false;
+    if (button_holds.b) {
+        use_teleport = true;
+    }
+
+    bool use_crouchwalk = false;
+    if (button_holds.down) {
+        use_crouchwalk = true;
+    }
+
     // Default to Melee mode.
     primary_backend->SetGameMode(
-        new Melee20Button(socd::SOCD_2IP_NO_REAC, { .crouch_walk_os = false })
+        new Melee20Button(socd::SOCD_2IP_NO_REAC, { .crouch_walk_os = use_crouchwalk, .teleport_coords = use_teleport })
     );
 }
 

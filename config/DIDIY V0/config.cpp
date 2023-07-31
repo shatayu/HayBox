@@ -11,47 +11,61 @@
 #include "core/pinout.hpp"
 #include "core/socd.hpp"
 #include "core/state.hpp"
-#include "input/SwitchMatrixInput.hpp"
+#include "input/GpioButtonInput.hpp"
+#include "input/NunchukInput.hpp"
 #include "joybus_utils.hpp"
 #include "modes/Melee20Button.hpp"
 #include "stdlib.hpp"
 
 #include <pico/bootrom.h>
 
-CommunicationBackend **backends;
+CommunicationBackend **backends = nullptr;
 size_t backend_count;
 KeyboardMode *current_kb_mode = nullptr;
 
-const size_t num_rows = 5;
-const size_t num_cols = 13;
-uint row_pins[num_rows] = { 20, 19, 18, 17, 16 };
-uint col_pins[num_cols] = { 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 };
-// clang-format off
-SwitchMatrixElement matrix[num_rows][num_cols] = {
-    {NA,      NA,        NA,         NA,         NA, BTN(select), BTN(start), BTN(home), NA, BTN(r),      BTN(y),    BTN(lightshield), BTN(midshield)},
-    { BTN(l), BTN(left), BTN(down),  BTN(right), NA, NA,          NA,         NA,        NA, BTN(b),      BTN(x),    BTN(z),           BTN(up)       },
-    { NA,     NA,        NA,         NA,         NA, NA,          NA,         NA,        NA, NA,          NA,        NA,               NA            },
-    { NA,     NA,        NA,         NA,         NA, NA,          NA,         NA,        NA, BTN(c_left), BTN(c_up), BTN(c_right),     NA            },
-    { NA,     NA,        BTN(mod_x), BTN(mod_y), NA, NA,          NA,         NA,        NA, BTN(c_down), BTN(a),    NA,               NA            },
+GpioButtonMapping button_mappings[] = {
+    {&InputState::l,            5 },
+    { &InputState::left,        4 },
+    { &InputState::down,        3 },
+    { &InputState::right,       2 },
+
+    { &InputState::mod_x,       6 },
+    { &InputState::mod_y,       7 },
+
+    { &InputState::start,       0 },
+
+    { &InputState::c_left,      13},
+    { &InputState::c_up,        12},
+    { &InputState::c_down,      15},
+    { &InputState::a,           14},
+    { &InputState::c_right,     16},
+
+    { &InputState::b,           26},
+    { &InputState::x,           21},
+    { &InputState::z,           19},
+    { &InputState::up,          17},
+
+    { &InputState::r,           27},
+    { &InputState::y,           22},
+    { &InputState::lightshield, 20},
+    { &InputState::midshield,   18},
 };
-// clang-format on
-DiodeDirection diode_direction = DiodeDirection::COL2ROW;
+size_t button_count = sizeof(button_mappings) / sizeof(GpioButtonMapping);
 
 const Pinout pinout = {
-    .joybus_data = 22,
+    .joybus_data = 28,
     .mux = -1,
     .nunchuk_detect = -1,
-    .nunchuk_sda = -1,
-    .nunchuk_scl = -1,
+    .nunchuk_sda = 8,
+    .nunchuk_scl = 9,
 };
 
 void setup() {
-    // Create switch matrix input source and use it to read button states for checking button holds.
-    SwitchMatrixInput<num_rows, num_cols> *matrix_input =
-        new SwitchMatrixInput<num_rows, num_cols>(row_pins, col_pins, matrix, diode_direction);
+    // Create GPIO input source and use it to read button states for checking button holds.
+    GpioButtonInput *gpio_input = new GpioButtonInput(button_mappings, button_count);
 
     InputState button_holds;
-    matrix_input->UpdateInputs(button_holds);
+    gpio_input->UpdateInputs(button_holds);
 
     // Bootsel button hold as early as possible for safety.
     if (button_holds.start) {
@@ -64,7 +78,7 @@ void setup() {
     gpio_put(PICO_DEFAULT_LED_PIN, 1);
 
     // Create array of input sources to be used.
-    static InputSource *input_sources[] = { matrix_input };
+    static InputSource *input_sources[] = { gpio_input };
     size_t input_source_count = sizeof(input_sources) / sizeof(InputSource *);
 
     ConnectedConsole console = detect_console(pinout.joybus_data);
@@ -137,5 +151,24 @@ void loop() {
 
     if (current_kb_mode != nullptr) {
         current_kb_mode->SendReport(backends[0]->GetInputs());
+    }
+}
+
+/* Nunchuk code runs on the second core */
+NunchukInput *nunchuk = nullptr;
+
+void setup1() {
+    while (backends == nullptr) {
+        tight_loop_contents();
+    }
+
+    // Create Nunchuk input source.
+    nunchuk = new NunchukInput(Wire, pinout.nunchuk_detect, pinout.nunchuk_sda, pinout.nunchuk_scl);
+}
+
+void loop1() {
+    if (backends != nullptr) {
+        nunchuk->UpdateInputs(backends[0]->GetInputs());
+        busy_wait_us(50);
     }
 }

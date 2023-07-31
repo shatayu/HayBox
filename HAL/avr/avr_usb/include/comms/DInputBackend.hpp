@@ -11,13 +11,14 @@
 
 class DInputBackend : public CommunicationBackend {
   public:
-    DInputBackend(InputSource **input_sources, size_t input_source_count);
+    DInputBackend(InputSource **input_sources, size_t input_source_count, bool nerfOn);
     ~DInputBackend();
     void SendReport();
 
   private:
     int16_t GetDpadAngle(bool left, bool right, bool down, bool up);
     Joystick_ *_joystick;
+    bool _nerfOn;
 };
 
 #endif

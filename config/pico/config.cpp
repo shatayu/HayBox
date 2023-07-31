@@ -22,8 +22,135 @@
 CommunicationBackend **backends = nullptr;
 size_t backend_count;
 KeyboardMode *current_kb_mode = nullptr;
+/*
+#define ALTMAP \
+    {&InputState::l,            5 },\
+    { &InputState::left,        4 },\
+    { &InputState::down,        3 },\
+    { &InputState::right,       2 },\
+\
+    { &InputState::mod_x,       6 },\
+    { &InputState::mod_y,       7 },\
+\
+    { &InputState::select,      10},\
+    { &InputState::start,       0 },\
+    { &InputState::home,        11},\
+\
+    { &InputState::c_left,      13},\
+    { &InputState::c_up,        12},\
+    { &InputState::c_down,      15},\
+    { &InputState::a,           14},\
+    { &InputState::c_right,     16},\
+\
+    { &InputState::b,           26},\
+    { &InputState::x,           21},\
+    { &InputState::z,           19},\
+    { &InputState::up,          17},\
+\
+    { &InputState::r,           27},\
+    { &InputState::y,           22},\
+    { &InputState::lightshield, 20},\
+    { &InputState::midshield,   18},
+*/
+
+/*
+//Group A Chef: r/b swap
+#define ALTMAP \
+    {&InputState::l,            5 },\
+    { &InputState::left,        4 },\
+    { &InputState::down,        3 },\
+    { &InputState::right,       2 },\
+\
+    { &InputState::mod_x,       6 },\
+    { &InputState::mod_y,       7 },\
+\
+    { &InputState::select,      10},\
+    { &InputState::start,       0 },\
+    { &InputState::home,        11},\
+\
+    { &InputState::c_left,      13},\
+    { &InputState::c_up,        12},\
+    { &InputState::c_down,      15},\
+    { &InputState::a,           14},\
+    { &InputState::c_right,     16},\
+\
+    { &InputState::b,           27},\
+    { &InputState::x,           21},\
+    { &InputState::z,           19},\
+    { &InputState::up,          17},\
+\
+    { &InputState::r,           26},\
+    { &InputState::y,           22},\
+    { &InputState::lightshield, 20},\
+    { &InputState::midshield,   18},
+*/
+
+/*
+//Group A Daniel
+#define ALTMAP \
+    {&InputState::l,            19},\
+    { &InputState::left,        4 },\
+    { &InputState::down,        3 },\
+    { &InputState::right,       2 },\
+\
+    { &InputState::mod_x,       6 },\
+    { &InputState::mod_y,       7 },\
+\
+    { &InputState::select,      10},\
+    { &InputState::start,       0 },\
+    { &InputState::home,        11},\
+\
+    { &InputState::c_left,      13},\
+    { &InputState::c_up,        12},\
+    { &InputState::c_down,      20},\
+    { &InputState::a,           14},\
+    { &InputState::c_right,     16},\
+\
+    { &InputState::b,           15},\
+    { &InputState::x,           21},\
+    { &InputState::z,           17},\
+    { &InputState::up,          26},\
+\
+    { &InputState::r,           27},\
+    { &InputState::y,           22},\
+    { &InputState::lightshield, 5 },\
+    { &InputState::midshield,   18},
+*/
+
+/*
+//Group C Potion: B/Z and cu/cd swap for peach
+#define ALTMAP \
+    {&InputState::l,            5 },\
+    { &InputState::left,        4 },\
+    { &InputState::down,        3 },\
+    { &InputState::right,       2 },\
+\
+    { &InputState::mod_x,       6 },\
+    { &InputState::mod_y,       7 },\
+\
+    { &InputState::select,      10},\
+    { &InputState::start,       0 },\
+    { &InputState::home,        11},\
+\
+    { &InputState::c_left,      13},\
+    { &InputState::c_up,        15},\
+    { &InputState::c_down,      12},\
+    { &InputState::a,           14},\
+    { &InputState::c_right,     16},\
+\
+    { &InputState::b,           19},\
+    { &InputState::x,           21},\
+    { &InputState::z,           26},\
+    { &InputState::up,          17},\
+\
+    { &InputState::r,           27},\
+    { &InputState::y,           22},\
+    { &InputState::lightshield, 20},\
+    { &InputState::midshield,   18},
+*/
 
 GpioButtonMapping button_mappings[] = {
+#ifndef ALTMAP
     {&InputState::l,            5 },
     { &InputState::left,        4 },
     { &InputState::down,        3 },
@@ -51,6 +178,9 @@ GpioButtonMapping button_mappings[] = {
     { &InputState::y,           22},
     { &InputState::lightshield, 20},
     { &InputState::midshield,   18},
+#else
+ALTMAP
+#endif
 };
 size_t button_count = sizeof(button_mappings) / sizeof(GpioButtonMapping);
 
@@ -79,6 +209,10 @@ void setup() {
     gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
     gpio_put(PICO_DEFAULT_LED_PIN, 1);
 
+    // Debug output for timing stuff on gp1
+    gpio_init(1);
+    gpio_set_dir(1, GPIO_OUT);
+
     // Create array of input sources to be used.
     static InputSource *input_sources[] = { gpio_input };
     size_t input_source_count = sizeof(input_sources) / sizeof(InputSource *);
@@ -103,14 +237,14 @@ void setup() {
             TUGamepad::registerDescriptor();
             TUKeyboard::registerDescriptor();
             backend_count = 2;
-            primary_backend = new DInputBackend(input_sources, input_source_count);
+            primary_backend = new DInputBackend(input_sources, input_source_count, !button_holds.a);
             backends = new CommunicationBackend *[backend_count] {
                 primary_backend, new B0XXInputViewer(input_sources, input_source_count)
             };
         } else {
             // Default to XInput mode if no console detected and no other mode forced.
             backend_count = 2;
-            primary_backend = new XInputBackend(input_sources, input_source_count);
+            primary_backend = new XInputBackend(input_sources, input_source_count, !button_holds.a);
             backends = new CommunicationBackend *[backend_count] {
                 primary_backend, new B0XXInputViewer(input_sources, input_source_count)
             };
@@ -118,7 +252,7 @@ void setup() {
     } else {
         if (console == ConnectedConsole::GAMECUBE) {
             primary_backend =
-                new GamecubeBackend(input_sources, input_source_count, pinout.joybus_data);
+                new GamecubeBackend(input_sources, input_source_count, pinout.joybus_data, !button_holds.a);
         } else if (console == ConnectedConsole::N64) {
             primary_backend = new N64Backend(input_sources, input_source_count, pinout.joybus_data);
         }
@@ -128,9 +262,19 @@ void setup() {
         backends = new CommunicationBackend *[backend_count] { primary_backend };
     }
 
+    bool use_teleport = false;
+    if (button_holds.b) {
+        use_teleport = true;
+    }
+
+    bool use_crouchwalk = false;
+    if (button_holds.down) {
+        use_crouchwalk = true;
+    }
+
     // Default to Melee mode.
     primary_backend->SetGameMode(
-        new Melee20Button(socd::SOCD_2IP_NO_REAC, { .crouch_walk_os = false })
+        new Melee20Button(socd::SOCD_2IP_NO_REAC, { .crouch_walk_os = use_crouchwalk, .teleport_coords = use_teleport })
     );
 }
 

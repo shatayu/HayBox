@@ -1,3 +1,18 @@
+# HayBox Travel Time
+
+This is a firmware designed for experimenting with travel time and other subframe nerfs for Melee based on Haystack's HayBox.
+
+The nerfs are subject to change, but in addition to that it offers several features:
+
+Arduino-based boxes will work at the same latency regardless of polling rate, as long as the poll spacing is constant.
+Users no longer need to hold A on plugin to optimize latency on console, and it'll have slightly less lag on adapters.
+
+Instead, the A press on plugin disables all timing based nerfs.
+
+Additionally, you can hold B on plugin to get the shorter recovery coordinates all have magnitudes about 0.8, for use with teleport recovery characters, and you can hold down on plugin to get the crouch-walk option select.
+
+It also currently has built-in support for a handful more boards than mainline Haybox, notably B0XX R4, Htangl, and Rana Digital.
+
 # HayBox
 
 HayBox is a modular, cross-platform firmware for digital or mixed analog/digital controllers, primarily targeted at [B0XX](https://b0xx.com)-style controllers.
@@ -158,6 +173,7 @@ To install the profile:
 - For Slippi this should be
   - On Windows: `%appdata%\Slippi Launcher\netplay\User\Config\Profiles\GCPad\`
   - On Linux: `~/.config/SlippiOnline/Config/Profiles/GCPad/`
+  - On Mac: `Cmd + Shift + G` and enter the path `/Users/<USER>/Library/Application Support/Slippi Launcher/netplay/Slippi Dolphin.app/Contents/Resources/Sys/Config/Profiles/GCPad`
 - For vanilla Dolphin: 
   - On Windows: `%userprofile%\Documents\Dolphin Emulator\Config\Profiles\GCPad\`
   - On Linux: `~/.config/dolphin-emu/Profiles/GCPad/`

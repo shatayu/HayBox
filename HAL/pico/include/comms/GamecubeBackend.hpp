@@ -12,6 +12,7 @@ class GamecubeBackend : public CommunicationBackend {
         InputSource **input_sources,
         size_t input_source_count,
         uint data_pin,
+        bool nerfOn,
         PIO pio = pio0,
         int sm = -1,
         int offset = -1
@@ -23,6 +24,7 @@ class GamecubeBackend : public CommunicationBackend {
   private:
     GamecubeConsole *_gamecube;
     gc_report_t _report;
+    bool _nerfOn;
 };
 
 #endif
