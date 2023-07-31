@@ -391,7 +391,7 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     currentTime++;
 
     static shortstate aHistory[HISTORYLEN];
-    static shortstate cHistory[HISTORYLEN];
+    //static shortstate cHistory[HISTORYLEN];
     static sdizonestate sdiZoneHist[HISTORYLEN];
 
     static bool initialized = false;
@@ -405,6 +405,7 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
             aHistory[i].y_start = ANALOG_STICK_NEUTRAL;
             aHistory[i].x_end = ANALOG_STICK_NEUTRAL;
             aHistory[i].y_end = ANALOG_STICK_NEUTRAL;
+            /*
             cHistory[i].timestamp = 0;
             cHistory[i].tt = 6;
             cHistory[i].x = ANALOG_STICK_NEUTRAL;
@@ -413,6 +414,7 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
             cHistory[i].y_start = ANALOG_STICK_NEUTRAL;
             cHistory[i].x_end = ANALOG_STICK_NEUTRAL;
             cHistory[i].y_end = ANALOG_STICK_NEUTRAL;
+            */
             sdiZoneHist[i].timestamp = 0;
             sdiZoneHist[i].zone = 0;
             sdiZoneHist[i].stale = true;
@@ -436,6 +438,7 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
                    oldA,
                    prelimAX,
                    prelimAY);
+    /*
     uint8_t prelimCX;
     uint8_t prelimCY;
     travelTimeCalc(currentTime-cHistory[currentIndexC].timestamp,
@@ -448,6 +451,7 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
                    oldC,
                    prelimCX,
                    prelimCY);
+    */
 
     //If we're doing a diagonal airdodge, make travel time instant to prevent inconsistent wavedash angles
     //this only fully works for neutral socd right now
@@ -627,8 +631,10 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     finalOutput.rightStickClick = rawOutputIn.rightStickClick;
     finalOutput.leftStickX      = prelimAX;
     finalOutput.leftStickY      = prelimAY;
-    finalOutput.rightStickX     = prelimCX;
-    finalOutput.rightStickY     = prelimCY;
+    //finalOutput.rightStickX     = prelimCX;
+    //finalOutput.rightStickY     = prelimCY;
+    finalOutput.rightStickX     = rawOutputIn.rightStickX;
+    finalOutput.rightStickY     = rawOutputIn.rightStickY;
     finalOutput.triggerLAnalog  = rawOutputIn.triggerLAnalog;
     finalOutput.triggerRAnalog  = rawOutputIn.triggerRAnalog;
 }
