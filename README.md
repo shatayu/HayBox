@@ -8,9 +8,9 @@ Current nerfs (**SUBJECT TO CHANGE**)
 * Travel time to the center or rim: 6ms (just over 1/3 frame)
 * Travel time to non-center non-rim coordinates: 16ms (1 frame)
 * Zero travel time when digital shielding and input is downward-diagonal, to make wavedashes consistent
-* 4 frame travel time for cardinal tapping SDI faster than 10 presses/s, but not for taps shorter than half a frame for switch bounce leniency.
-* Lockout for diagonal tapping SDI (holding a cardinal) faster than 10 presses/s (6f)
-* Lockout for cardinal + diagonal tapping SDI faster than 7.5 presses/s (8f)
+* 4 frame travel time for cardinal tapping SDI (numpad notation: 5656...) faster than 10 presses/s, but not for taps shorter than half a frame for switch bounce leniency.
+* Lockout for diagonal tapping SDI (numpad notation: 636**3**...) faster than 10 presses/s (6f)
+* Lockout for cardinal + diagonal tapping SDI (numpad notation: 56356**3**) faster than 7.5 presses/s (8f)
 * Moving from a crouching coordinate to an upward tilt in < 2 frames will move the stick to a tap jump coordinate
 
 The nerfs are subject to change, but in addition to that it offers several features:
