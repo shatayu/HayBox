@@ -16,6 +16,10 @@ jobs:
               bin_ext: uf2
             - env: pico
               bin_ext: uf2
+            - env: rana_digital
+              bin_ext: uf2
+            - env: b0xx_r4
+              bin_ext: uf2
             - env: arduino_uno
               bin_ext: hex
             - env: arduino_nano
@@ -39,6 +43,12 @@ jobs:
             - env: lbx
               bin_ext: hex
             - env: smashbox
+              bin_ext: hex
+            - env: HTangl-Proto
+              bin_ext: hex
+            - env: HTangl-V1
+              bin_ext: hex
+            - env: HTangl-V2
               bin_ext: hex
 
     steps:
