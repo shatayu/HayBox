@@ -21,7 +21,8 @@
 #define JUMP_TIME (16*2*250)//units of 4us; after a recent crouch to upward input, always hold full up for 2 frames
 
 #define TIMELIMIT_FRAME (16*250)//units of 4us; 1 frame, for reference
-#define TIMELIMIT_DEBOUNCE (6*250)//units of 4us; 6ms
+#define TIMELIMIT_DEBOUNCE (6*250)//units of 4us; 6ms;
+#define TIMELIMIT_SIMUL (2*250)//units of 4us; 3ms: if the latest inputs are less than 2 ms apart then don't nerf cardiag
 
 #define TIMELIMIT_DASH (16*15*250)//units of 4us; last dash time prior to a pivot input; 15 frames
 #define TIMELIMIT_PIVOT (24*250)//units of 4us; any longer than 1.5 frames is not likely to be a pivot
@@ -207,7 +208,9 @@ uint8_t isTapSDI(const sdizonestate zoneHistory[HISTORYLEN],
     //check whether it returned to center recently
     //const bool recentOrig = (zoneList[1] & zoneList[2]) == 0;//may be too lenient in case people throw in modifier taps?
     //check whether the input was fast enough
-    const bool shortTime = ((timeList[0] - timeList[4])*sampleSpacing < TIMELIMIT_CARDIAG) && !staleList[4];
+    const bool shortTime = ((timeList[0] - timeList[4])*sampleSpacing < TIMELIMIT_CARDIAG) &&
+                           ((timeList[0] - timeList[1])*sampleSpacing > TIMELIMIT_SIMUL) &&
+                           !staleList[4];
 
     //if it hit only one cardinal
     //             if only the same diagonal was pressed
