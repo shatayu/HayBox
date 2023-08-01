@@ -487,6 +487,7 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
         }
         aHistory[currentIndexA].tt = prelimTT;
     }
+    /*
     if(cHistory[currentIndexC].x != rawOutputIn.rightStickX || cHistory[currentIndexC].y != rawOutputIn.rightStickY) {
         oldC = false;
         currentIndexC = (currentIndexC + 1) % HISTORYLEN;
@@ -507,17 +508,16 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
         if(!isEasy(xIn, yIn)) {
             prelimTT = max(prelimTT, TRAVELTIME_INTERNAL);
         }
-        /*
         //if the destination is on the opposite side from the current prelim coord
-        if((xIn < ANALOG_STICK_NEUTRAL && ANALOG_STICK_NEUTRAL < prelimCX) ||
-           (yIn < ANALOG_STICK_NEUTRAL && ANALOG_STICK_NEUTRAL < prelimCY) ||
-           (xIn > ANALOG_STICK_NEUTRAL && ANALOG_STICK_NEUTRAL > prelimCX) ||
-           (yIn > ANALOG_STICK_NEUTRAL && ANALOG_STICK_NEUTRAL > prelimCY)) {
-            prelimTT = max(prelimTT, TRAVELTIME_CROSS);
-        }
-        */
+        //if((xIn < ANALOG_STICK_NEUTRAL && ANALOG_STICK_NEUTRAL < prelimCX) ||
+        //   (yIn < ANALOG_STICK_NEUTRAL && ANALOG_STICK_NEUTRAL < prelimCY) ||
+        //   (xIn > ANALOG_STICK_NEUTRAL && ANALOG_STICK_NEUTRAL > prelimCX) ||
+        //   (yIn > ANALOG_STICK_NEUTRAL && ANALOG_STICK_NEUTRAL > prelimCY)) {
+        //    prelimTT = max(prelimTT, TRAVELTIME_CROSS);
+        //}
         cHistory[currentIndexC].tt = prelimTT;
     }
+    */
 
     //===============================applying the nerfed coords=================================//
     finalOutput.a               = rawOutputIn.a;//TODO prelimAButton

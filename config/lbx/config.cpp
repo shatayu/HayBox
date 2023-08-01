@@ -85,7 +85,7 @@ void setup() {
 
     // Hold B on plugin for Brook board mode.
     pinMode(pinout.mux, OUTPUT);
-    if (button_holds.b && button_holds.buttonR) {
+    if (button_holds.b && button_holds.r) {
         digitalWrite(pinout.mux, HIGH);
         brook_mode = true;
         return;
