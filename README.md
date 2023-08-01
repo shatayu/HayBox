@@ -114,7 +114,7 @@ To reboot Pico-based controllers into bootsel mode, hold Start on plugin.
 
 #### Brook board passthrough mode
 
-To switch to Brook board mode on GCCPCB2, GCCMX, B0XX R2, or LBX, hold B on
+To switch to Brook board mode on GCCPCB2, GCCMX, B0XX R2, or LBX, hold B and R on
 plugin.
 
 #### Communication backends (console selection)
