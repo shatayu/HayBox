@@ -5,11 +5,11 @@ This is a firmware designed for experimenting with travel time and other subfram
 Current nerfs (**SUBJECT TO CHANGE**)
 
 * Neutral SOCD
-* Travel time to the center or rim: 6ms (just over 1/3 frame)
-* Travel time to non-center non-rim coordinates: 12ms (2/3 frame)
+* Left stick travel time to the center or rim: 6ms (just over 1/3 frame)
+* Left stick travel time to non-center non-rim coordinates: 12ms (2/3 frame)
 * Zero travel time when digital shielding and input is downward-diagonal, to make wavedashes consistent
 * 4 frame travel time for cardinal tapping SDI (numpad notation: 5656...) faster than 10 presses/s, but not for taps shorter than half a frame for switch bounce leniency.
-* Lockout for diagonal tapping SDI (numpad notation: 636**3**...) faster than 10 presses/s (6f)
+* ~~Lockout for diagonal tapping SDI (numpad notation: 636**3**...) faster than 10 presses/s (6f)~~ disabled
 * Lockout for cardinal + diagonal tapping SDI (numpad notation: 56356**3**) faster than 7.5 presses/s (8f)
 * Moving from a crouching coordinate to an upward tilt in < 2 frames will move the stick to a tap jump coordinate
 
@@ -182,9 +182,9 @@ indicate what communication backend and operating system they are for:
 To install the profile:
 1. Copy the appropriate .ini file from the `dolphin` folder within HayBox to the folder `<YourDolphinInstallation>\User\Config\Profiles\GCPad\` (create it if it does not exist)
 - For Slippi this should be
-  - On Windows: `%appdata%\Slippi Launcher\netplay\Sys\Config\Profiles\GCPad\`
+  - On Windows: `%appdata%\Slippi Launcher\netplay\User\Config\Profiles\GCPad\`
   - On Linux: `~/.config/SlippiOnline/Config/Profiles/GCPad/`
-  - On Mac: `Cmd + Shift + G` and enter the path `/Users/<USER>/Library/Application Support/Slippi Launcher/netplay/Slippi Dolphin.app/Contents/Resources/Sys/Config/Profiles/GCPad`
+  - On Mac: `Cmd + Shift + G` and enter the path `/Users/<USER>/Library/Application Support/Slippi Launcher/netplay/Slippi Dolphin.app/Contents/Resources/User/Config/Profiles/GCPad`
 - For vanilla Dolphin: 
   - On Windows: `%userprofile%\Documents\Dolphin Emulator\Config\Profiles\GCPad\`
   - On Linux: `~/.config/dolphin-emu/Profiles/GCPad/`

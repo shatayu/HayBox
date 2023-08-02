@@ -205,7 +205,7 @@ uint8_t isTapSDI(const sdizonestate zoneHistory[HISTORYLEN],
             if((zoneList[0] == 0) || (zoneList[1] == 0)) {//if one of the pairs of zones is zero, it's tapping a cardinal
                 output = output | BITS_SDI_TAP_CARD;
             } else if(popCur+popOne == 3) { //one is cardinal and the other is diagonal
-                output = output | BITS_SDI_TAP_DIAG;
+                //output = output | BITS_SDI_TAP_DIAG;
             }
         }
     }
