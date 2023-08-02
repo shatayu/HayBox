@@ -7,14 +7,14 @@
 #define ANALOG_STICK_NEUTRAL 128
 #define ANALOG_DEAD_MAX (128+22)/*this is in the deadzone*/
 #define ANALOG_STICK_MAX 208
-#define ANALOG_STICK_CROUCH (128-50)/*this y coordinate will hold a crouch*/
+#define ANALOG_CROUCH (128-50)/*this y coordinate will hold a crouch*/
 #define ANALOG_DASH_LEFT (128-64)/*this x coordinate will dash left*/
 #define ANALOG_DASH_RIGHT (128+64)/*this x coordinate will dash right*/
 #define MELEE_RIM_RAD2 6185/*if x^2+y^2 >= this, it's on the rim*/
 
 #define TRAVELTIME_EASY 6//ms
-#define TRAVELTIME_CROSS 12//ms to cross gate
-#define TRAVELTIME_INTERNAL 16//ms for "easy" to "internal"; 1 frame
+#define TRAVELTIME_CROSS 12//ms to cross gate; unused
+#define TRAVELTIME_INTERNAL 12//ms for "easy" to "internal"; 2/3 frame
 #define TRAVELTIME_SLOW (4*16)//ms for tap SDI nerfing, 4 frames
 
 #define TIMELIMIT_DOWNUP (16*3*250)//units of 4us; how long after a crouch to upward input should it begin a jump?
@@ -107,9 +107,9 @@ uint8_t lookback(const uint8_t currentIndex,
 uint8_t sdiZone(const uint8_t x, const uint8_t y) {
     uint8_t result = 0b0000'0000;
     if(x >= ANALOG_DEAD_MIN && x <= ANALOG_DEAD_MAX) {
-        if(y < ANALOG_DEAD_MIN) {
+        if(y < ANALOG_DASH_LEFT) {
             result = result | BITS_D;
-        } else if(y > ANALOG_DEAD_MAX) {
+        } else if(y > ANALOG_DASH_RIGHT) {
             result = result | BITS_U;
         }
     } else if(x < ANALOG_DEAD_MIN) {
@@ -128,6 +128,36 @@ uint8_t sdiZone(const uint8_t x, const uint8_t y) {
         } else if(x >= ANALOG_DASH_RIGHT) {
             result = result | BITS_R;
         }
+    }
+    return result;
+}
+
+//the output will have the following bits set:
+//0b0000'0100 for left
+//0b0000'1000 for right
+//no bits set for neutral
+//thresholds are dash for the x-axis
+uint8_t pivotZone(const uint8_t x) {
+    uint8_t result = 0b0000'0000;
+    if(x <= ANALOG_DASH_LEFT) {
+        result = result | BITS_L;
+    } else if(x >= ANALOG_DASH_RIGHT) {
+        result = result | BITS_R;
+    }
+    return result;
+}
+
+//the output will have the following bits set:
+//0b0000'0001 for up
+//0b0000'0010 for down
+//no bits set for neutral
+//thresholds are uptilt for up and stay in crouch for down
+uint8_t crouchUptiltZone(const uint8_t y) {
+    uint8_t result = 0b0000'0000;
+    if(y > ANALOG_DEAD_MIN) {
+        result = result | BITS_U;
+    } else if(y <= ANALOG_CROUCH) {
+        result = result | BITS_D;
     }
     return result;
 }
@@ -378,7 +408,7 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     //if it's a pivot uptilt coordinate, make Y jump //TODO
 
     //if it's a fast crouch to upward coordinate, make Y jump even if a tilt was desired
-    if(aHistory[currentIndexA].y_start < ANALOG_STICK_CROUCH &&//started out in a crouch
+    if(aHistory[currentIndexA].y_start < ANALOG_CROUCH &&//started out in a crouch
        aHistory[currentIndexA].y > ANALOG_DEAD_MAX &&//wanting to go out of the deadzone
        (aHistory[currentIndexA].timestamp-aHistory[lookback(currentIndexA,1)].timestamp)*sampleSpacing < TIMELIMIT_DOWNUP &&//the upward input occurred < 3 frames after the previous stick movement
        (currentTime-aHistory[currentIndexA].timestamp)*sampleSpacing < JUMP_TIME) {//it's been less than 2 frames since the stick was moved up (this sets the duration of the stick jump input)
@@ -386,7 +416,7 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     }
     //handle neutral SOCD for the crouch uptilt nerf
     const uint8_t prevIndexA = lookback(currentIndexA, 1);
-    if(aHistory[prevIndexA].y_start < ANALOG_STICK_CROUCH &&//started out in a crouch
+    if(aHistory[prevIndexA].y_start < ANALOG_CROUCH &&//started out in a crouch
        aHistory[currentIndexA].y > ANALOG_DEAD_MAX &&//wanting to go out of the deadzone
        (aHistory[currentIndexA].timestamp-aHistory[prevIndexA].timestamp)*sampleSpacing < TIMELIMIT_DOWNUP &&//the upward input occurred < 3 frames after the previous stick movement
        (currentTime-aHistory[currentIndexA].timestamp)*sampleSpacing < JUMP_TIME) {//it's been less than 2 frames since the stick was moved up (this sets the duration of the stick jump input)
