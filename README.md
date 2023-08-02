@@ -182,7 +182,7 @@ indicate what communication backend and operating system they are for:
 To install the profile:
 1. Copy the appropriate .ini file from the `dolphin` folder within HayBox to the folder `<YourDolphinInstallation>\User\Config\Profiles\GCPad\` (create it if it does not exist)
 - For Slippi this should be
-  - On Windows: `%appdata%\Slippi Launcher\netplay\User\Config\Profiles\GCPad\`
+  - On Windows: `%appdata%\Slippi Launcher\netplay\User\Config\Profiles\GCPad\` (if this doesn't work, try `...\netplay\Sys\User\...`)
   - On Linux: `~/.config/SlippiOnline/Config/Profiles/GCPad/`
   - On Mac: `Cmd + Shift + G` and enter the path `/Users/<USER>/Library/Application Support/Slippi Launcher/netplay/Slippi Dolphin.app/Contents/Resources/User/Config/Profiles/GCPad`
 - For vanilla Dolphin: 
