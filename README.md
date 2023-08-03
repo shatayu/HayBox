@@ -40,6 +40,7 @@ Current nerfs (**SUBJECT TO CHANGE**)
   * Because the button that initiates wavedashes itself modifies the ModX and ModY angles, travel time would guarantee inconsistent angles.
 * 4 frame travel time for cardinal tapping SDI (numpad notation: 5656...) faster than 10 presses/s, but not for taps shorter than half a frame for switch bounce leniency.
   * This is implemented because with neutral SOCD it's relatively easy to get double-rate mashing. To mash right with one full cycle per press AND per release, press right, press left, release left, release right (and repeat).
+  * By merely increasing the travel time and not locking out, this mitigates SDI without significantly affecting aerial drift control via rapid tapping.
   * We need to do SDI testing to check whether this is needed at all for short SDI windows (Fox upair 1) and whether it can achieve more distance than wank SDI on long SDI windows (knee).
 * ~~Lockout for diagonal tapping SDI (numpad notation: 636**3**...) faster than 10 presses/s (6f)~~ Currently Disabled
   * This was implemented for the same reasons as cardinal tap SDI.
