@@ -2,6 +2,18 @@
 
 This is a firmware designed for experimenting with travel time and other subframe nerfs for Melee based on Haystack's HayBox.
 
+We believe that digital controllers, when used for Melee, are a little overtuned relative to GCC.
+
+Our goal is to make it so that box users and GCC users have a level playing field without doing this by buffing custom motherboard GCCs to the level of boxes, so that the barrier to entry for new players isn't a PhobGCC or a rectangle, or by changing the game to be significantly easier than it currently is.
+
+Particular strengths of rectangle controllers we had in mind when desigining the initial set of nerfs:
+
+* Dashdancing: GCC players perceive that it's more difficult to hit a dashdancing box player because of their increased ability to react to a threat and dash away.
+* SDI: While GCCs can produce tremendous sustained SDI using the "wank" technique, boxes have much more consistency for short SDI windows and we want to reduce their ability to produce many SDI inputs in a very short time.
+  * Note: it will probably never be possible to make it more difficult to do two consecutive SDI inputs on a box.
+* Pivot tilts: While empty pivoting is somewhat less consistent on rectangles, they are able to pinpoint tilt inputs after an empty pivot much more quickly and consistently than a GCC player can reasonably do without overshooting.
+* Crouch uptilts: Reactionary crouching uptilts and dash cancel uptilts, both strong options, are significantly easier on rectangles than on stick because a fast stick motion is likely to overshoot and result in an upsmash or tap jump.
+
 Current nerfs (**SUBJECT TO CHANGE**)
 
 * Neutral SOCD
@@ -10,9 +22,10 @@ Current nerfs (**SUBJECT TO CHANGE**)
   * Many consider this to be slightly better than 2ip no-reactivation for controlling aerial drift, because you can never lock yourself out of drift.
   * It affects away-then-in ledgedashes, making them much harder to be frame-perfect similar to on sticks.
     * However, it is pointed out that c-stick ledgedrops still exist, just people would need to practice them (and they may be less ergonomic on rectangles with large button spacing).
-    * Some players, depending on the character, want wider ModX wavedash angles to make held-modX down-then-in ledgedashes have the same timing. Is this just fox?
+    * Some players, depending on the character, want wider ModX wavedash angles to make held-modX down-then-in ledgedashes have the same timing. Is this just Fox?
   * However, it is generally riskier for vertical recovery mixups like fastfall up-b.
-  * Will we stick with this? It's likely, but there are potential alternatives that have been suggested (that are significantly harder to implement):
+  * Additionally, if you're not used to lifting fingers up it may take time to get used to.
+  * Will we stick with this? There are potential alternatives that have been suggested, though they are significantly harder to implement:
     * 2ip no reactivation that has significantly increased travel time when both directions are pressed
     * 2ip no reactivation vertically, but not horizontally. (possibly with the above); this would need an additional SDI nerf similar to the B0XX ones.
 * Left stick travel time to the center or rim: 6ms (just over 1/3 frame)
@@ -45,7 +58,7 @@ Current nerfs (**SUBJECT TO CHANGE**)
   * The 2 frame window was initially determined by asking top GCC controller modders what they thought would be a reasonable limit.
   * In early testing, players have said that it feels reasonable. The limit is easy enough to avoid but at the same time holds back degenerate options.
 
-In addition to those it offers several features:
+In addition to nerfs, it offers several features:
 
 Arduino-based boxes will work at the same latency regardless of polling rate, as long as the poll spacing is constant.
 Users no longer need to hold A on plugin to optimize latency on console, and it'll have slightly less lag on adapters.
@@ -55,6 +68,8 @@ Instead, the A press on plugin disables all timing based nerfs.
 Additionally, you can hold B on plugin to get the shorter recovery coordinates that all have magnitudes about 0.8, for use with teleport recovery characters, and you can hold Down on plugin to get the crouch-walk option select.
 
 It also currently has built-in support for a handful more boards than mainline Haybox, notably B0XX R4, Htangl, and Rana Digital.
+
+Limitations: Any console polling that does not have uniform space between polls will trip up the connection. Notably, the Homebrew Menu, Nintendont, SmashScope on console, and third-party GCC to USB adapters can work either poorly or not at all.
 
 # HayBox
 
