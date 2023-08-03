@@ -6,7 +6,7 @@ We believe that digital controllers, when used for Melee, are a little overtuned
 
 Our goal is to make it so that box users and GCC users have a level playing field without doing this by buffing custom motherboard GCCs to the level of boxes, so that the barrier to entry for new players isn't a PhobGCC or a rectangle, or by changing the game to be significantly easier than it currently is.
 
-Particular strengths of rectangle controllers we had in mind when desigining the initial set of nerfs:
+Particular strengths of rectangle controllers we had in mind when designing the initial set of nerfs:
 
 * Dashdancing: GCC players perceive that it's more difficult to hit a dashdancing box player because of their increased ability to react to a threat and dash away.
 * SDI: While GCCs can produce tremendous sustained SDI using the "wank" technique, boxes have much more consistency for short SDI windows and we want to reduce their ability to produce many SDI inputs in a very short time.
