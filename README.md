@@ -12,7 +12,7 @@ Particular strengths of rectangle controllers we had in mind when desigining the
 * SDI: While GCCs can produce tremendous sustained SDI using the "wank" technique, boxes have much more consistency for short SDI windows and we want to reduce their ability to produce many SDI inputs in a very short time.
   * Note: it will probably never be possible to make it more difficult to do two consecutive SDI inputs on a box.
 * Pivot tilts: While empty pivoting is somewhat less consistent on rectangles, they are able to pinpoint tilt inputs after an empty pivot much more quickly and consistently than a GCC player can reasonably do without overshooting.
-* Crouch uptilts: Reactionary crouching uptilts and dash cancel uptilts, both strong options, are significantly easier on rectangles than on stick because a fast stick motion is likely to overshoot and result in an upsmash or tap jump.
+* Crouch uptilts: Reactionary crouching uptilts and run cancel uptilts, both strong options, are significantly easier on rectangles than on stick because a fast stick motion is likely to overshoot and result in an upsmash or tap jump.
 
 Current nerfs (**SUBJECT TO CHANGE**)
 
