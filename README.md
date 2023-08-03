@@ -5,22 +5,54 @@ This is a firmware designed for experimenting with travel time and other subfram
 Current nerfs (**SUBJECT TO CHANGE**)
 
 * Neutral SOCD
+  * Neutral SOCD helps mitigate easy three-consecutive-input SDI
+  * Neutral SOCD also helps make long-distance dashdancing a little riskier, because there are two motions required to turn around when you want to change direction. Thus you have an increased risk of getting stuck in a skidding turnaround when you try to turn around right at the end of initial dash. Alternatively, you can release the forward direction early, but that sacrifices distance.
+  * Many consider this to be slightly better than 2ip no-reactivation for controlling aerial drift, because you can never lock yourself out of drift.
+  * It affects away-then-in ledgedashes, making them much harder to be frame-perfect similar to on sticks.
+    * However, it is pointed out that c-stick ledgedrops still exist, just people would need to practice them (and they may be less ergonomic on rectangles with large button spacing).
+    * Some players, depending on the character, want wider ModX wavedash angles to make held-modX down-then-in ledgedashes have the same timing. Is this just fox?
+  * However, it is generally riskier for vertical recovery mixups like fastfall up-b.
+  * Will we stick with this? It's likely, but there are potential alternatives that have been suggested (that are significantly harder to implement):
+    * 2ip no reactivation that has significantly increased travel time when both directions are pressed
+    * 2ip no reactivation vertically, but not horizontally. (possibly with the above); this would need an additional SDI nerf similar to the B0XX ones.
 * Left stick travel time to the center or rim: 6ms (just over 1/3 frame)
+  * Travel time exists to add some reaction time parity between sticks and buttons, and to also make digital inputs subject to at least some of the same polling timing considerations as sticks.
+  * This value is based off measured center-to-rim stick speeds from various players, as well as a little bit of rectangle testing before where a player remarked that even slightly longer travel time felt worse.
+  * Because the travel is linear, this delays inputs by 3 ms on average, but it may be slightly more depending on where the threshold is along the travel distance. For dashdancing turnarounds, this is more like a 5ms delay, but for dashing from standing it's more like 2ms.
 * Left stick travel time to non-center non-rim coordinates: 12ms (2/3 frame)
+  * This is longer than the rim travel times because it takes longer, on a stick, to pinpoint a non-rim position.
+  * This used to be 16 ms, a whole frame, but users noted that it made timing button inputs for tilts harder. On a stick, even if it takes longer to get to a tilt location, you get feedback from your senses of when the motion is completed, but that's not true of button presses with simulated travel time.
+  * There's one other issue with this, though, which is that most of the rectangle angles are not rim coordinates even if they're used in a context where a GCC user would have their stick on the rim, so this is a little more impactful than is strictly ideal.
 * Zero travel time when digital shielding and input is downward-diagonal, to make wavedashes consistent
+  * Because the button that initiates wavedashes itself modifies the ModX and ModY angles, travel time would guarantee inconsistent angles.
 * 4 frame travel time for cardinal tapping SDI (numpad notation: 5656...) faster than 10 presses/s, but not for taps shorter than half a frame for switch bounce leniency.
-* ~~Lockout for diagonal tapping SDI (numpad notation: 636**3**...) faster than 10 presses/s (6f)~~ disabled
+  * This is implemented because with neutral SOCD it's relatively easy to get double-rate mashing. To mash right with one full cycle per press AND per release, press right, press left, release left, release right (and repeat).
+  * We need to do SDI testing to check whether this is needed at all for short SDI windows (Fox upair 1) and whether it can achieve more distance than wank SDI on long SDI windows (knee).
+* ~~Lockout for diagonal tapping SDI (numpad notation: 636**3**...) faster than 10 presses/s (6f)~~ Currently Disabled
+  * This was implemented for the same reasons as cardinal tap SDI.
+  * However, at the moment it's disabled because it affects shield drop fastfall.
+  * We would like users to test whether abusing diagonal tap SDI is noticeably impactful in game.
+  * In the future this may be re-enabled with a different time window.
 * Lockout for cardinal + diagonal tapping SDI (numpad notation: 56356**3**) faster than 7.5 presses/s (8f)
+  * The last remaining SDI method gets you a cardinal and a diagonal SDI pulse for every press, by plinking two adjacent cardinals.
+  * This is basically repeated quarter-circle SDI in a way that's not really doable on a stick.
+  * It is occasionally impactful in game: one person reported that their ledgedash technique, which involves dropping from ledge with down then in, releasing, and pressing diagonal again to airdodge, was impacted.
 * Moving from a crouching coordinate to an upward tilt in < 2 frames will move the stick to a tap jump coordinate
+  * This prevents users from continuously holding crouch and uptilting on reaction in a single motion.
+  * Additionally, it affects the speed of run cancel uptilt.
+  * Neutral SOCD does not compound with this: time spent in neutral counts towards the two frames you have to wait.
+  * This is a fairly non-controversial new nerf, because it's something that is a strong option in game that is extremely difficult to execute on a stick.
+  * The 2 frame window was initially determined by asking top GCC controller modders what they thought would be a reasonable limit.
+  * In early testing, players have said that it feels reasonable. The limit is easy enough to avoid but at the same time holds back degenerate options.
 
-The nerfs are subject to change, but in addition to that it offers several features:
+In addition to those it offers several features:
 
 Arduino-based boxes will work at the same latency regardless of polling rate, as long as the poll spacing is constant.
 Users no longer need to hold A on plugin to optimize latency on console, and it'll have slightly less lag on adapters.
 
 Instead, the A press on plugin disables all timing based nerfs.
 
-Additionally, you can hold B on plugin to get the shorter recovery coordinates all have magnitudes about 0.8, for use with teleport recovery characters, and you can hold down on plugin to get the crouch-walk option select.
+Additionally, you can hold B on plugin to get the shorter recovery coordinates that all have magnitudes about 0.8, for use with teleport recovery characters, and you can hold Down on plugin to get the crouch-walk option select.
 
 It also currently has built-in support for a handful more boards than mainline Haybox, notably B0XX R4, Htangl, and Rana Digital.
 
