@@ -51,13 +51,14 @@ Current nerfs (**SUBJECT TO CHANGE**)
   * The last remaining SDI method gets you a cardinal and a diagonal SDI pulse for every press, by plinking two adjacent cardinals.
   * This is basically repeated quarter-circle SDI in a way that's not really doable on a stick.
   * It is occasionally impactful in game: one person reported that their ledgedash technique, which involves dropping from ledge with down then in, releasing, and pressing diagonal again to airdodge, was impacted.
-* Moving from a crouching coordinate to an upward tilt in < 2 frames will move the stick to a tap jump coordinate
+* Moving from a crouching coordinate to an upward tilt in < 3 frames will move the stick to a tap jump coordinate
   * This prevents users from continuously holding crouch and uptilting on reaction in a single motion.
   * Additionally, it affects the speed of run cancel uptilt.
   * Neutral SOCD does not compound with this: time spent in neutral counts towards the two frames you have to wait.
   * This is a fairly non-controversial new nerf, because it's something that is a strong option in game that is extremely difficult to execute on a stick.
-  * The 2 frame window was initially determined by asking top GCC controller modders what they thought would be a reasonable limit.
+  * The 3 frame window was initially determined by asking top GCC controller modders what they thought would be a reasonable limit.
   * In early testing, players have said that it feels reasonable. The limit is easy enough to avoid but at the same time holds back degenerate options.
+  * NOTE: earlier this said 2 frames. I checked the code and it had been 3 frames all along.
 
 In addition to nerfs, it offers several features:
 

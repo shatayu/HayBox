@@ -64,12 +64,6 @@ typedef struct {
     bool stale;
 } sdizonestate;
 
-//for crouch uptilt, we want to record only crouch
-typedef struct {
-    uint16_t timestamp;
-    int8_t downup;
-} downupstate;
-
 bool isEasy(const uint8_t x, const uint8_t y) {
     //is it in the deadzone?
     if(x >= ANALOG_DEAD_MIN && x <= ANALOG_DEAD_MAX && y >= ANALOG_DEAD_MIN && y <= ANALOG_DEAD_MAX) {
@@ -143,21 +137,6 @@ uint8_t pivotZone(const uint8_t x) {
         result = result | BITS_L;
     } else if(x >= ANALOG_DASH_RIGHT) {
         result = result | BITS_R;
-    }
-    return result;
-}
-
-//the output will have the following bits set:
-//0b0000'0001 for up
-//0b0000'0010 for down
-//no bits set for neutral
-//thresholds are uptilt for up and stay in crouch for down
-uint8_t crouchUptiltZone(const uint8_t y) {
-    uint8_t result = 0b0000'0000;
-    if(y > ANALOG_DEAD_MIN) {
-        result = result | BITS_U;
-    } else if(y <= ANALOG_CROUCH) {
-        result = result | BITS_D;
     }
     return result;
 }
@@ -407,20 +386,30 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
 
     //if it's a pivot uptilt coordinate, make Y jump //TODO
 
-    //if it's a fast crouch to upward coordinate, make Y jump even if a tilt was desired
-    if(aHistory[currentIndexA].y_start < ANALOG_CROUCH &&//started out in a crouch
-       aHistory[currentIndexA].y > ANALOG_DEAD_MAX &&//wanting to go out of the deadzone
-       (aHistory[currentIndexA].timestamp-aHistory[lookback(currentIndexA,1)].timestamp)*sampleSpacing < TIMELIMIT_DOWNUP &&//the upward input occurred < 3 frames after the previous stick movement
-       (currentTime-aHistory[currentIndexA].timestamp)*sampleSpacing < JUMP_TIME) {//it's been less than 2 frames since the stick was moved up (this sets the duration of the stick jump input)
-           prelimAY = 255;
+    //if it's a pivot ftilt coordinate, make X dash/smash //TODO
+
+    //if it's a crouch to upward coordinate too quickly, make Y jump even if a tilt was desired
+    static uint16_t timeSinceCrouch = 200;
+    static bool downUpJumping;
+    static uint16_t timeSinceJump = 200;
+
+    //increment timeSinceCrouch unless you have crouched
+    timeSinceCrouch = min(timeSinceCrouch+1, 200);
+    if(prelimAY < ANALOG_CROUCH) {
+        timeSinceCrouch = 0;
     }
-    //handle neutral SOCD for the crouch uptilt nerf
-    const uint8_t prevIndexA = lookback(currentIndexA, 1);
-    if(aHistory[prevIndexA].y_start < ANALOG_CROUCH &&//started out in a crouch
-       aHistory[currentIndexA].y > ANALOG_DEAD_MAX &&//wanting to go out of the deadzone
-       (aHistory[currentIndexA].timestamp-aHistory[prevIndexA].timestamp)*sampleSpacing < TIMELIMIT_DOWNUP &&//the upward input occurred < 3 frames after the previous stick movement
-       (currentTime-aHistory[currentIndexA].timestamp)*sampleSpacing < JUMP_TIME) {//it's been less than 2 frames since the stick was moved up (this sets the duration of the stick jump input)
-           prelimAY = 255;
+
+    //increment timeSinceJump unless you want to trigger a jump
+    timeSinceJump = min(timeSinceJump+1, 200);
+    if(timeSinceCrouch*sampleSpacing < TIMELIMIT_DOWNUP && prelimAY > ANALOG_DEAD_MAX && !downUpJumping) {
+        downUpJumping = true;
+        timeSinceJump = 0;
+    }
+
+    if(timeSinceJump*sampleSpacing < JUMP_TIME) {
+        prelimAY = 255;
+    } else {
+        downUpJumping = false;
     }
 
     //if it's wank sdi (TODO) or diagonal tap SDI, lock out the cross axis
