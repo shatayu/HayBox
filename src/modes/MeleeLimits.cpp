@@ -311,7 +311,6 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     currentTime++;
 
     static shortstate aHistory[HISTORYLEN];
-    //static shortstate cHistory[HISTORYLEN];
     static sdizonestate sdiZoneHist[HISTORYLEN];
 
     static bool initialized = false;
