@@ -325,16 +325,6 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
             aHistory[i].y_start = ANALOG_STICK_NEUTRAL;
             aHistory[i].x_end = ANALOG_STICK_NEUTRAL;
             aHistory[i].y_end = ANALOG_STICK_NEUTRAL;
-            /*
-            cHistory[i].timestamp = 0;
-            cHistory[i].tt = 6;
-            cHistory[i].x = ANALOG_STICK_NEUTRAL;
-            cHistory[i].y = ANALOG_STICK_NEUTRAL;
-            cHistory[i].x_start = ANALOG_STICK_NEUTRAL;
-            cHistory[i].y_start = ANALOG_STICK_NEUTRAL;
-            cHistory[i].x_end = ANALOG_STICK_NEUTRAL;
-            cHistory[i].y_end = ANALOG_STICK_NEUTRAL;
-            */
             sdiZoneHist[i].timestamp = 0;
             sdiZoneHist[i].zone = 0;
             sdiZoneHist[i].stale = true;
@@ -358,20 +348,6 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
                    oldA,
                    prelimAX,
                    prelimAY);
-    /*
-    uint8_t prelimCX;
-    uint8_t prelimCY;
-    travelTimeCalc(currentTime-cHistory[currentIndexC].timestamp,
-                   sampleSpacing,
-                   cHistory[currentIndexC].tt,
-                   cHistory[currentIndexC].x_start,
-                   cHistory[currentIndexC].y_start,
-                   cHistory[currentIndexC].x_end,
-                   cHistory[currentIndexC].y_end,
-                   oldC,
-                   prelimCX,
-                   prelimCY);
-    */
 
     //If we're doing a diagonal airdodge, make travel time instant to prevent inconsistent wavedash angles
     //this only fully works for neutral socd right now
@@ -509,37 +485,6 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
         }
         aHistory[currentIndexA].tt = prelimTT;
     }
-    /*
-    if(cHistory[currentIndexC].x != rawOutputIn.rightStickX || cHistory[currentIndexC].y != rawOutputIn.rightStickY) {
-        oldC = false;
-        currentIndexC = (currentIndexC + 1) % HISTORYLEN;
-
-        const uint8_t xIn = rawOutputIn.rightStickX;
-        const uint8_t yIn = rawOutputIn.rightStickY;
-
-        cHistory[currentIndexC].timestamp = currentTime;
-        cHistory[currentIndexC].x = xIn;
-        cHistory[currentIndexC].y = yIn;
-        cHistory[currentIndexC].x_end = xIn;
-        cHistory[currentIndexC].y_end = yIn;
-        cHistory[currentIndexC].x_start = prelimCX;
-        cHistory[currentIndexC].y_start = prelimCY;
-
-        uint8_t prelimTT = TRAVELTIME_EASY;
-        //if the destination is not an "easy" coordinate
-        if(!isEasy(xIn, yIn)) {
-            prelimTT = max(prelimTT, TRAVELTIME_INTERNAL);
-        }
-        //if the destination is on the opposite side from the current prelim coord
-        //if((xIn < ANALOG_STICK_NEUTRAL && ANALOG_STICK_NEUTRAL < prelimCX) ||
-        //   (yIn < ANALOG_STICK_NEUTRAL && ANALOG_STICK_NEUTRAL < prelimCY) ||
-        //   (xIn > ANALOG_STICK_NEUTRAL && ANALOG_STICK_NEUTRAL > prelimCX) ||
-        //   (yIn > ANALOG_STICK_NEUTRAL && ANALOG_STICK_NEUTRAL > prelimCY)) {
-        //    prelimTT = max(prelimTT, TRAVELTIME_CROSS);
-        //}
-        cHistory[currentIndexC].tt = prelimTT;
-    }
-    */
 
     //===============================applying the nerfed coords=================================//
     finalOutput.a               = rawOutputIn.a;//TODO prelimAButton
@@ -561,8 +506,6 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     finalOutput.rightStickClick = rawOutputIn.rightStickClick;
     finalOutput.leftStickX      = prelimAX;
     finalOutput.leftStickY      = prelimAY;
-    //finalOutput.rightStickX     = prelimCX;
-    //finalOutput.rightStickY     = prelimCY;
     finalOutput.rightStickX     = rawOutputIn.rightStickX;
     finalOutput.rightStickY     = rawOutputIn.rightStickY;
     finalOutput.triggerLAnalog  = rawOutputIn.triggerLAnalog;
