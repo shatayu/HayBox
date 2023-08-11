@@ -99,25 +99,48 @@ void Melee18Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
             // 22.9638 - 7375 3125 = 59 25
             outputs.leftStickX = 128 + (directions.x * 59);
             outputs.leftStickY = 128 + (directions.y * 25);
+
             // 27.37104 - 7000 3625 (27.38) = 56 29
-            if (inputs.c_down) {
-                outputs.leftStickX = 128 + (directions.x * 56);
-                outputs.leftStickY = 128 + (directions.y * 29);
-            }
-            // 31.77828 - 7875 4875 (31.76) = 63 39
-            if (inputs.c_left) {
-                outputs.leftStickX = 128 + (directions.x * 63);
-                outputs.leftStickY = 128 + (directions.y * 39);
-            }
-            // 36.18552 - 7000 5125 (36.21) = 56 41
-            if (inputs.c_up) {
-                outputs.leftStickX = 128 + (directions.x * 56);
-                outputs.leftStickY = 128 + (directions.y * 41);
-            }
-            // 40.59276 - 6125 5250 (40.6) = 49 42
-            if (inputs.c_right) {
-                outputs.leftStickX = 128 + (directions.x * 49);
-                outputs.leftStickY = 128 + (directions.y * 42);
+            if (!_options.teleport_coords) {
+                if (inputs.c_down) {
+                    outputs.leftStickX = 128 + (directions.x * 56);
+                    outputs.leftStickY = 128 + (directions.y * 29);
+                }
+                // 31.77828 - 7875 4875 (31.76) = 63 39
+                if (inputs.c_left) {
+                    outputs.leftStickX = 128 + (directions.x * 63);
+                    outputs.leftStickY = 128 + (directions.y * 39);
+                }
+                // 36.18552 - 7000 5125 (36.21) = 56 41
+                if (inputs.c_up) {
+                    outputs.leftStickX = 128 + (directions.x * 56);
+                    outputs.leftStickY = 128 + (directions.y * 41);
+                }
+                // 40.59276 - 6125 5250 (40.6) = 49 42
+                if (inputs.c_right) {
+                    outputs.leftStickX = 128 + (directions.x * 49);
+                    outputs.leftStickY = 128 + (directions.y * 42);
+                }
+            } else {//roughly 0.8 magnitude for uniform shorter teleports
+                if (inputs.c_down) {
+                    outputs.leftStickX = 128 + (directions.x * 57);
+                    outputs.leftStickY = 128 + (directions.y * 30);
+                }
+                // 31.77828 - 7875 4875 (31.76) = 63 39
+                if (inputs.c_left) {
+                    outputs.leftStickX = 128 + (directions.x * 55);
+                    outputs.leftStickY = 128 + (directions.y * 34);
+                }
+                // 36.18552 - 7000 5125 (36.21) = 56 41
+                if (inputs.c_up) {
+                    outputs.leftStickX = 128 + (directions.x * 52);
+                    outputs.leftStickY = 128 + (directions.y * 38);
+                }
+                // 40.59276 - 6125 5250 (40.6) = 49 42
+                if (inputs.c_right) {
+                    outputs.leftStickX = 128 + (directions.x * 49);
+                    outputs.leftStickY = 128 + (directions.y * 42);
+                }
             }
 
             /* Extended Up B Angles */
@@ -168,24 +191,46 @@ void Melee18Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
             outputs.leftStickX = 128 + (directions.x * 25);
             outputs.leftStickY = 128 + (directions.y * 59);
             // 62.62896 - 3625 7000 (62.62) = 29 56
-            if (inputs.c_down) {
-                outputs.leftStickX = 128 + (directions.x * 29);
-                outputs.leftStickY = 128 + (directions.y * 56);
-            }
-            // 58.22172 - 4875 7875 (58.24) = 39 63
-            if (inputs.c_left) {
-                outputs.leftStickX = 128 + (directions.x * 39);
-                outputs.leftStickY = 128 + (directions.y * 63);
-            }
-            // 53.81448 - 5125 7000 (53.79) = 41 56
-            if (inputs.c_up) {
-                outputs.leftStickX = 128 + (directions.x * 41);
-                outputs.leftStickY = 128 + (directions.y * 56);
-            }
-            // 49.40724 - 6375 7625 (50.10) = 51 61
-            if (inputs.c_right) {
-                outputs.leftStickX = 128 + (directions.x * 51);
-                outputs.leftStickY = 128 + (directions.y * 61);
+            if (!_options.teleport_coords) {
+                if (inputs.c_down) {
+                    outputs.leftStickX = 128 + (directions.x * 29);
+                    outputs.leftStickY = 128 + (directions.y * 56);
+                }
+                // 58.22172 - 4875 7875 (58.24) = 39 63
+                if (inputs.c_left) {
+                    outputs.leftStickX = 128 + (directions.x * 39);
+                    outputs.leftStickY = 128 + (directions.y * 63);
+                }
+                // 53.81448 - 5125 7000 (53.79) = 41 56
+                if (inputs.c_up) {
+                    outputs.leftStickX = 128 + (directions.x * 41);
+                    outputs.leftStickY = 128 + (directions.y * 56);
+                }
+                // 49.40724 - 6375 7625 (50.10) = 51 61
+                if (inputs.c_right) {
+                    outputs.leftStickX = 128 + (directions.x * 51);
+                    outputs.leftStickY = 128 + (directions.y * 61);
+                }
+            } else {//roughly 0.8 magnitude for uniform shorter teleports
+                if (inputs.c_down) {
+                    outputs.leftStickX = 128 + (directions.x * 30);
+                    outputs.leftStickY = 128 + (directions.y * 57);
+                }
+                // 58.22172 - 4875 7875 (58.24) = 39 63
+                if (inputs.c_left) {
+                    outputs.leftStickX = 128 + (directions.x * 35);
+                    outputs.leftStickY = 128 + (directions.y * 57);
+                }
+                // 53.81448 - 5125 7000 (53.79) = 41 56
+                if (inputs.c_up) {
+                    outputs.leftStickX = 128 + (directions.x * 38);
+                    outputs.leftStickY = 128 + (directions.y * 52);
+                }
+                // 49.40724 - 6375 7625 (50.10) = 51 61
+                if (inputs.c_right) {
+                    outputs.leftStickX = 128 + (directions.x * 41);
+                    outputs.leftStickY = 128 + (directions.y * 50);
+                }
             }
 
             /* Extended Up B Angles */
