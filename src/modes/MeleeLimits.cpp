@@ -10,6 +10,8 @@
 #define ANALOG_CROUCH (128-50)/*this y coordinate will hold a crouch*/
 #define ANALOG_DASH_LEFT (128-64)/*this x coordinate will dash left*/
 #define ANALOG_DASH_RIGHT (128+64)/*this x coordinate will dash right*/
+#define ANALOG_SDI_LEFT (128-56)/*this x coordinate will sdi left*/
+#define ANALOG_SDI_RIGHT (128-56)/*this x coordinate will sdi right*/
 #define MELEE_RIM_RAD2 6185/*if x^2+y^2 >= this, it's on the rim*/
 
 #define TRAVELTIME_EASY 6//ms
@@ -20,12 +22,12 @@
 #define TIMELIMIT_DOWNUP (16*3*250)//units of 4us; how long after a crouch to upward input should it begin a jump?
 #define JUMP_TIME (16*2*250)//units of 4us; after a recent crouch to upward input, always hold full up for 2 frames
 
-#define TIMELIMIT_FRAME (16*250)//units of 4us; 1 frame, for reference
+#define TIMELIMIT_FRAME 4167//(16.66...*250)//units of 4us; 1 frame, for reference
+#define TIMELIMIT_HALFFRAME 2083//(8.33...*250)//units of 4us; 1/2 frame
 #define TIMELIMIT_DEBOUNCE (6*250)//units of 4us; 6ms;
 #define TIMELIMIT_SIMUL (2*250)//units of 4us; 3ms: if the latest inputs are less than 2 ms apart then don't nerf cardiag
 
 #define TIMELIMIT_DASH (16*15*250)//units of 4us; last dash time prior to a pivot input; 15 frames
-#define TIMELIMIT_PIVOT (24*250)//units of 4us; any longer than 1.5 frames is not likely to be a pivot
 
 #define TIMELIMIT_QCIRC (16*6*250)//units of 4us; 6 frames
 
@@ -34,11 +36,15 @@
 
 #define TIMELIMIT_CARDIAG (16*8*250)//units of 4us; 8 frames
 
-#define BITS_DIR 0b0000'1111
-#define BITS_U   0b0000'0001
-#define BITS_D   0b0000'0010
-#define BITS_L   0b0000'0100
-#define BITS_R   0b0000'1000
+#define TIMELIMIT_PIVOTTILT 32000//(8*16*250)//units of 4us; 8 frames
+
+enum pivotdir{P_None, P_Leftright, P_Rightleft};
+
+#define ZONE_DIR 0b0000'1111
+#define ZONE_U   0b0000'0001
+#define ZONE_D   0b0000'0010
+#define ZONE_L   0b0000'0100
+#define ZONE_R   0b0000'1000
 
 #define BITS_SDI      0b1111'0000
 #define BITS_SDI_WANK     0b0001'0000
@@ -63,6 +69,13 @@ typedef struct {
     uint8_t zone;
     bool stale;
 } sdizonestate;
+
+//for pivot nerfs, we want to record only movement between dash zones, ignoring movement within zones
+typedef struct {
+    uint16_t timestamp;//in samples
+    uint8_t zone;
+    bool stale;
+} pivotzonestate;
 
 bool isEasy(const uint8_t x, const uint8_t y) {
     //is it in the deadzone?
@@ -101,26 +114,26 @@ uint8_t lookback(const uint8_t currentIndex,
 uint8_t sdiZone(const uint8_t x, const uint8_t y) {
     uint8_t result = 0b0000'0000;
     if(x >= ANALOG_DEAD_MIN && x <= ANALOG_DEAD_MAX) {
-        if(y < ANALOG_DASH_LEFT) {
-            result = result | BITS_D;
-        } else if(y > ANALOG_DASH_RIGHT) {
-            result = result | BITS_U;
+        if(y < ANALOG_SDI_LEFT) {
+            result = result | ZONE_D;
+        } else if(y > ANALOG_SDI_RIGHT) {
+            result = result | ZONE_U;
         }
     } else if(x < ANALOG_DEAD_MIN) {
         if(y < ANALOG_DEAD_MIN) {
-            result = result | BITS_D | BITS_L;
+            result = result | ZONE_D | ZONE_L;
         } else if(y > ANALOG_DEAD_MAX) {
-            result = result | BITS_U | BITS_L;
-        } else if(x <= ANALOG_DASH_LEFT) {
-            result = result | BITS_L;
+            result = result | ZONE_U | ZONE_L;
+        } else if(x <= ANALOG_SDI_LEFT) {
+            result = result | ZONE_L;
         }
     } else /*if(x > ANALOG_DEAD_MAX)*/ {
         if(y < ANALOG_DEAD_MIN) {
-            result = result | BITS_D | BITS_R;
+            result = result | ZONE_D | ZONE_R;
         } else if(y > ANALOG_DEAD_MAX) {
-            result = result | BITS_U | BITS_R;
-        } else if(x >= ANALOG_DASH_RIGHT) {
-            result = result | BITS_R;
+            result = result | ZONE_U | ZONE_R;
+        } else if(x >= ANALOG_SDI_RIGHT) {
+            result = result | ZONE_R;
         }
     }
     return result;
@@ -134,9 +147,9 @@ uint8_t sdiZone(const uint8_t x, const uint8_t y) {
 uint8_t pivotZone(const uint8_t x) {
     uint8_t result = 0b0000'0000;
     if(x <= ANALOG_DASH_LEFT) {
-        result = result | BITS_L;
+        result = result | ZONE_L;
     } else if(x >= ANALOG_DASH_RIGHT) {
-        result = result | BITS_R;
+        result = result | ZONE_R;
     }
     return result;
 }
@@ -312,6 +325,7 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
 
     static shortstate aHistory[HISTORYLEN];
     static sdizonestate sdiZoneHist[HISTORYLEN];
+    static pivotzonestate pivotZoneHist[HISTORYLEN];
 
     static bool initialized = false;
     if(!initialized) {
@@ -327,6 +341,9 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
             sdiZoneHist[i].timestamp = 0;
             sdiZoneHist[i].zone = 0;
             sdiZoneHist[i].stale = true;
+            pivotZoneHist[i].timestamp = 0;
+            pivotZoneHist[i].zone = 0;
+            pivotZoneHist[i].stale = true;
         }
         initialized = true;
     }
@@ -357,11 +374,76 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
         prelimAY = rawOutputIn.leftStickY;
     }
 
-    //if it's a pivot downtilt coordinate, lock out A //TODO
+    //detect an input that gives >50% pivot probability given travel time
+    //if we are in a new pivot zone, record the new zone
+    //we're keeping these in sequence so we copy them all
+    if(pivotZoneHist[0].zone != pivotZone(prelimAX)) {
+        for(int i = HISTORYLEN-1; i >= 0; i--) {
+            pivotZoneHist[i+1].timestamp = pivotZoneHist[i].timestamp;
+            pivotZoneHist[i+1].zone = pivotZoneHist[i].zone;
+            pivotZoneHist[i+1].stale = pivotZoneHist[i].stale;
+        }
 
-    //if it's a pivot uptilt coordinate, make Y jump //TODO
+        pivotZoneHist[0].timestamp = currentTime;
+        pivotZoneHist[0].zone = pivotZone(prelimAX);
+        pivotZoneHist[0].stale = false;
+    }
+    for(int i = 0; i < HISTORYLEN; i++) {
+        if((currentTime-pivotZoneHist[i].timestamp) * (sampleSpacing>>1) > 15*16*125) { //15 frames
+            pivotZoneHist[i].stale = true;
+        }
+    }
 
-    //if it's a pivot ftilt coordinate, make X dash/smash //TODO
+    //pivot inputs:
+    //current--------------------past
+    //---neutral ----left ---neutral ---right
+    //---neutral ----left ---right
+    //---neutral ---right ---neutral ---left
+    //---neutral ---right ---left
+    //start time of neutral minus
+    //  start time of ^ between 0.5 and 1.5 frames
+    //current time minus start time of neutral should be used to limit how long the nerf applies for
+    pivotdir direction = P_None;
+    if(pivotZoneHist[0].zone == 0) {
+        if(pivotZoneHist[1].zone == ZONE_L && (pivotZoneHist[2].zone == ZONE_R || pivotZoneHist[3].zone == ZONE_R)) {
+            direction = P_Rightleft;
+        } else if(pivotZoneHist[1].zone == ZONE_R && (pivotZoneHist[2].zone == ZONE_L || pivotZoneHist[3].zone == ZONE_L)) {
+            direction = P_Leftright;
+        }
+    }
+    uint16_t pivotLength = (pivotZoneHist[0].timestamp - pivotZoneHist[1].timestamp)*sampleSpacing;
+    if(pivotLength < TIMELIMIT_HALFFRAME || pivotLength > TIMELIMIT_FRAME+TIMELIMIT_HALFFRAME) {
+        //less than 50% chance it was a successful pivot
+        direction = P_None;
+    }
+    //check for staleness
+    if(pivotZoneHist[3].stale || pivotZoneHist[2].stale || pivotZoneHist[1].stale || pivotZoneHist[0].stale) {
+        //if the previous movement was more than 15 frames earlier
+        direction = P_None;
+    }
+
+    uint16_t pivotAge = (currentTime - pivotZoneHist[0].timestamp)*sampleSpacing;
+    if(pivotAge > TIMELIMIT_PIVOTTILT) {
+        direction = P_None;
+    }
+
+    //actually apply the nerfs
+    //if it's a downtilt coordinate, make Y smash down
+    if(direction != P_None && prelimAY < ANALOG_DEAD_MIN) {
+        prelimAY = 0;
+    }
+    //if it's a uptilt coordinate, make Y jump
+    if(direction != P_None && prelimAY > ANALOG_DEAD_MAX) {
+        prelimAY = 255;
+    }
+    //if it's a ftilt coordinate, make X dash/smash
+    //we need to use raw input in instead of prelim because that gets caught by travel time for a moment
+    if(direction == P_Leftright && rawOutputIn.leftStickX < ANALOG_DEAD_MIN) {
+        prelimAX = 0;
+    }
+    if(direction == P_Rightleft && rawOutputIn.leftStickX > ANALOG_DEAD_MAX) {
+        prelimAX = 255;
+    }
 
     //if it's a crouch to upward coordinate too quickly, make Y jump even if a tilt was desired
     static uint16_t timeSinceCrouch = 200;
@@ -391,7 +473,7 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     const uint8_t sdi = isTapSDI(sdiZoneHist, currentIndexA, currentTime, sampleSpacing);
     static bool wankNerf = false;
     if(sdi & (BITS_SDI_TAP_DIAG | BITS_SDI_TAP_CRDG)){
-        if(sdi & (BITS_L | BITS_R)) {
+        if(sdi & (ZONE_L | ZONE_R)) {
             //lock the cross axis
             prelimAY = ANALOG_STICK_NEUTRAL;
             //make sure future cross axis travel time begins at the origin
@@ -401,7 +483,7 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
             //make sure that future cardinal travel time begins where it was before
             aHistory[currentIndexA].x_end = prelimAX;
             wankNerf = true;
-        } else if(sdi & (BITS_U | BITS_D)) {
+        } else if(sdi & (ZONE_U | ZONE_D)) {
             //lock the cross axis
             prelimAX = ANALOG_STICK_NEUTRAL;
             //make sure future cross axis travel time begins at the origin
