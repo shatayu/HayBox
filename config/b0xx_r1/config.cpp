@@ -9,8 +9,11 @@
 #include "core/socd.hpp"
 #include "core/state.hpp"
 #include "input/GpioButtonInput.hpp"
-#include "input/NunchukInput.hpp"
+#ifndef MODLS
 #include "modes/Melee20Button.hpp"
+#else
+#include "modes/Melee18Button.hpp"
+#endif
 #include "stdlib.hpp"
 
 CommunicationBackend **backends = nullptr;
@@ -53,10 +56,6 @@ Pinout pinout = {
 };
 
 void setup() {
-    // Create Nunchuk input source - must be done before GPIO input source otherwise it would
-    // disable the pullups on the i2c pins.
-    NunchukInput *nunchuk = new NunchukInput();
-
     // Create GPIO input source and use it to read button states for checking button holds.
     GpioButtonInput *gpio_input = new GpioButtonInput(button_mappings, button_count);
 
@@ -64,7 +63,7 @@ void setup() {
     gpio_input->UpdateInputs(button_holds);
 
     // Create array of input sources to be used.
-    static InputSource *input_sources[] = { gpio_input, nunchuk };
+    static InputSource *input_sources[] = { gpio_input };
     size_t input_source_count = sizeof(input_sources) / sizeof(InputSource *);
 
     CommunicationBackend *primary_backend = new DInputBackend(input_sources, input_source_count, !button_holds.a);
@@ -112,7 +111,11 @@ void setup() {
 
     // Default to Melee mode.
     primary_backend->SetGameMode(
+#ifndef MODLS
         new Melee20Button(socd::SOCD_2IP_NO_REAC, { .crouch_walk_os = use_crouchwalk, .teleport_coords = use_teleport })
+#else
+        new Melee18Button(socd::SOCD_2IP_NO_REAC, { .crouch_walk_os = use_crouchwalk, .teleport_coords = use_teleport })
+#endif
     );
 }
 
