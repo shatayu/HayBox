@@ -29,15 +29,7 @@ void Melee18Button::UpdateDigitalOutputs(InputState &inputs, OutputState &output
     outputs.x = inputs.x;
     outputs.y = inputs.y;
     outputs.buttonR = inputs.z;
-    if (inputs.nunchuk_connected) {
-        // Lightshield with C button.
-        if (inputs.nunchuk_c) {
-            outputs.triggerLAnalog = 49;
-        }
-        outputs.triggerLDigital = inputs.nunchuk_z;
-    } else {
-        outputs.triggerLDigital = inputs.l;
-    }
+    outputs.triggerLDigital = inputs.l;
     outputs.triggerRDigital = inputs.r;
     outputs.start = inputs.start;
 
@@ -80,9 +72,11 @@ void Melee18Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
     }
 
     if (inputs.mod_x) {
+        // MX + Horizontal (even if shield is held) = 6625 = 53
         if (directions.horizontal) {
             outputs.leftStickX = 128 + (directions.x * 53);
         }
+        // MX + Vertical (even if shield is held) = 5375 = 43
         if (directions.vertical) {
             outputs.leftStickY = 128 + (directions.y * 43);
         }
@@ -178,11 +172,6 @@ void Melee18Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
         }
         if (directions.vertical) {
             outputs.leftStickY = 128 + (directions.y * 59);
-        }
-
-        // Turnaround neutral B nerf
-        if (inputs.b) {
-            outputs.leftStickX = 128 + (directions.x * 80);
         }
 
         /* Up B angles */
@@ -331,21 +320,9 @@ void Melee18Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
         outputs.rightStickY = 128 + (directions.cy * 68);
     }
 
-    // Horizontal SOCD overrides X-axis modifiers (for ledgedash maximum jump
-    // trajectory).
-    if (!inputs.r && horizontal_socd && !directions.vertical) {
-        outputs.leftStickX = 128 + (directions.x * 80);
-    }
-
     // Shut off C-stick when using D-Pad layer.
     if ((inputs.mod_x && inputs.mod_y) || inputs.nunchuk_c) {
         outputs.rightStickX = 128;
         outputs.rightStickY = 128;
-    }
-
-    // Nunchuk overrides left stick.
-    if (inputs.nunchuk_connected) {
-        outputs.leftStickX = inputs.nunchuk_x;
-        outputs.leftStickY = inputs.nunchuk_y;
     }
 }

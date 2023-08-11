@@ -318,7 +318,6 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     //    Increase travel time on cardinal and lock out later diagonals.
 
     static bool oldA = true;
-    static bool oldC = true;
 
     static uint16_t currentTime = 0;
     currentTime++;
@@ -348,7 +347,6 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
         initialized = true;
     }
     static uint8_t currentIndexA = 0;
-    static uint8_t currentIndexC = 0;
     static uint8_t currentIndexSDI = 0;
 
     //calculate travel from the previous step
@@ -568,7 +566,7 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     }
 
     //===============================applying the nerfed coords=================================//
-    finalOutput.a               = rawOutputIn.a;//TODO prelimAButton
+    finalOutput.a               = rawOutputIn.a;
     finalOutput.b               = rawOutputIn.b;
     finalOutput.x               = rawOutputIn.x;
     finalOutput.y               = rawOutputIn.y;

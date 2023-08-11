@@ -29,11 +29,7 @@ void Melee20Button::UpdateDigitalOutputs(InputState &inputs, OutputState &output
     outputs.x = inputs.x;
     outputs.y = inputs.y;
     outputs.buttonR = inputs.z;
-    if (inputs.nunchuk_connected) {
-        outputs.triggerLDigital = inputs.nunchuk_z;
-    } else {
-        outputs.triggerLDigital = inputs.l;
-    }
+    outputs.triggerLDigital = inputs.l;
     outputs.triggerRDigital = inputs.r;
     outputs.start = inputs.start;
 
@@ -291,11 +287,13 @@ void Melee20Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
         outputs.rightStickY = 128 + (directions.cy * 68);
     }
 
+    /*
     // Horizontal SOCD overrides X-axis modifiers (for ledgedash maximum jump
     // trajectory).
     if (_horizontal_socd && !directions.vertical) {
         outputs.leftStickX = 128 + (directions.x * 80);
     }
+    */
 
     if (inputs.lightshield) {
         outputs.triggerRAnalog = 49;
@@ -315,11 +313,5 @@ void Melee20Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
     if ((inputs.mod_x && inputs.mod_y) || inputs.nunchuk_c) {
         outputs.rightStickX = 128;
         outputs.rightStickY = 128;
-    }
-
-    // Nunchuk overrides left stick.
-    if (inputs.nunchuk_connected) {
-        outputs.leftStickX = inputs.nunchuk_x;
-        outputs.leftStickY = inputs.nunchuk_y;
     }
 }
