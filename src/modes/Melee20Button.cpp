@@ -182,6 +182,10 @@ void Melee20Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
         if (directions.horizontal) {
             outputs.leftStickX = 128 + (directions.x * 27);
         }
+        // Turnaround neutral B nerf
+        if (inputs.b) {
+            outputs.leftStickX = 128 + (directions.x * 80);
+        }
         // MY + Vertical (even if shield is held) = 7375 = 59
         if (directions.vertical) {
             outputs.leftStickY = 128 + (directions.y * 59);
@@ -195,11 +199,6 @@ void Melee20Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
                 outputs.leftStickX = 128 + (directions.x * 40);
                 outputs.leftStickY = 128 + (directions.y * 68);
             }
-        }
-
-        // Turnaround neutral B nerf
-        if (inputs.b) {
-            outputs.leftStickX = 128 + (directions.x * 80);
         }
 
         /* Up B angles */
