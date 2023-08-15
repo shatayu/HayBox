@@ -32,7 +32,7 @@
 
 #define TIMELIMIT_QCIRC (16*6*250)//units of 4us; 6 frames
 
-#define TIMELIMIT_TAP (16*12*250)//units of 4us; 6 frames
+#define TIMELIMIT_TAP (16*6*250)//units of 4us; 6 frames
 #define TIMELIMIT_TAP_PLUS 36000//(16*9*250)//units of 4us; 9 frames ...the expression overflows on arduino for some reason
 
 #define TIMELIMIT_CARDIAG (16*8*250)//units of 4us; 8 frames
@@ -491,7 +491,7 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     }
 
     //if it's wank sdi (TODO) or diagonal tap SDI, lock out the cross axis
-    const uint8_t sdi = isTapSDI(sdiZoneHist, currentIndexA, currentTime, sampleSpacing);
+    const uint8_t sdi = isTapSDI(sdiZoneHist, currentIndexSDI, currentTime, sampleSpacing);
     static bool wankNerf = false;
     if(sdi & (BITS_SDI_TAP_DIAG | BITS_SDI_TAP_CRDG)){
         if(sdi & (ZONE_L | ZONE_R)) {
@@ -518,12 +518,14 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
             wankNerf = true;
         }//one or the other should occur
         //debug to see if SDI was detected
+        /*
         if(sdi & BITS_SDI_TAP_CARD) {
             prelimCX = 200;
         }
         if(sdi & BITS_SDI_TAP_CRDG) {
             prelimCY = 200;
         }
+        */
     } else if(wankNerf) {
         aHistory[currentIndexA].x_end = aHistory[currentIndexA].x;
         aHistory[currentIndexA].y_end = aHistory[currentIndexA].y;
