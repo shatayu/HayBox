@@ -74,6 +74,32 @@ void GamecubeBackend::SendReport() {
                 sampleSpacing = minLoop / sampleCount;
             }
         }
+        // Make sure to respond while measuring.
+        ScanInputs(InputScanSpeed::FAST);
+
+        // Run gamemode logic.
+        UpdateOutputs();
+
+        _report.a = _outputs.a;
+        _report.b = _outputs.b;
+        _report.x = _outputs.x;
+        _report.y = _outputs.y;
+        _report.z = _outputs.buttonR;
+        _report.l = _outputs.triggerLDigital;
+        _report.r = _outputs.triggerRDigital;
+        _report.start = _outputs.start;
+        _report.dpad_left = _outputs.dpadLeft | _outputs.select;
+        _report.dpad_right = _outputs.dpadRight | _outputs.home;
+        _report.dpad_down = _outputs.dpadDown;
+        _report.dpad_up = _outputs.dpadUp;
+
+        // Analog outputs
+        _report.stick_x = _outputs.leftStickX;
+        _report.stick_y = _outputs.leftStickY;
+        _report.cstick_x = _outputs.rightStickX;
+        _report.cstick_y = _outputs.rightStickY;
+        _report.l_analog = _outputs.triggerLAnalog;
+        _report.r_analog = _outputs.triggerRAnalog;
     } else {
         //run the delay procedure based on samplespacing
         //in the stock arduino software, it samples 850 us after the end of the poll response
@@ -85,7 +111,7 @@ void GamecubeBackend::SendReport() {
 #endif
 
             const int nerfTime = 0;
-            const int computationTime = 250 + nerfTime*_nerfOn;//us; depends on the platform.
+            const int computationTime = 250 + nerfTime;//*_nerfOn;//us; depends on the platform.
             const uint32_t targetTime = ((i+1)*sampleSpacing)-computationTime;
             int count = 0;
             while(micros() - newSampleTime < targetTime) {
@@ -101,10 +127,11 @@ void GamecubeBackend::SendReport() {
             // Run gamemode logic.
             UpdateOutputs();
 
-            if(_nerfOn) {
+            //if(_nerfOn) {
+            if(true) {
                 //APPLY NERFS HERE
                 OutputState nerfedOutputs;
-                limitOutputs(sampleSpacing/4, _inputs, _outputs, nerfedOutputs);
+                limitOutputs(sampleSpacing/4, _nerfOn ? AB_A : AB_B, _inputs, _outputs, nerfedOutputs);
 
                 // Digital outputs
                 _report.a = nerfedOutputs.a;

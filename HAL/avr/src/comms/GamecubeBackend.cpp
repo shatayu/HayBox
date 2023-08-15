@@ -99,6 +99,33 @@ void GamecubeBackend::SendReport() {
             Serial.println(sampleSpacing);
             */
         }
+        // Make sure to respond while measuring.
+        ScanInputs();
+
+        // Run gamemode logic.
+        UpdateOutputs();
+
+        // Digital outputs
+        _data.report.a = _outputs.a;
+        _data.report.b = _outputs.b;
+        _data.report.x = _outputs.x;
+        _data.report.y = _outputs.y;
+        _data.report.z = _outputs.buttonR;
+        _data.report.l = _outputs.triggerLDigital;
+        _data.report.r = _outputs.triggerRDigital;
+        _data.report.start = _outputs.start;
+        _data.report.dleft = _outputs.dpadLeft | _outputs.select;
+        _data.report.dright = _outputs.dpadRight | _outputs.home;
+        _data.report.ddown = _outputs.dpadDown;
+        _data.report.dup = _outputs.dpadUp;
+
+        // Analog outputs
+        _data.report.xAxis = _outputs.leftStickX;
+        _data.report.yAxis = _outputs.leftStickY;
+        _data.report.cxAxis = _outputs.rightStickX;
+        _data.report.cyAxis = _outputs.rightStickY;
+        _data.report.left = _outputs.triggerLAnalog + 31;
+        _data.report.right = _outputs.triggerRAnalog + 31;
     } else {
         if(loopTime > minLoop+(minLoop >> 1)) {//if the loop time is 50% longer than expected
             /*
@@ -124,7 +151,7 @@ void GamecubeBackend::SendReport() {
 #endif
 
             const uint16_t nerfTime = 200/4;
-            const uint16_t computationTime = 700/4 + nerfTime*_nerfOn;//depends on the platform; 4us steps.
+            const uint16_t computationTime = 700/4 + nerfTime;//*_nerfOn;//depends on the platform; 4us steps.
             //700 microseconds is sufficient with no travel time computation
             const uint16_t targetTime = ((i+1)*sampleSpacing)-computationTime;
             //const uint16_t targetTime = i*sampleSpacing;
@@ -139,10 +166,11 @@ void GamecubeBackend::SendReport() {
             // Run gamemode logic.
             UpdateOutputs();
 
-            if(_nerfOn) {
+            //if(_nerfOn) {
+            if(true) {
                 //APPLY NERFS HERE
                 OutputState nerfedOutputs;
-                limitOutputs(sampleSpacing, _inputs, _outputs, nerfedOutputs);
+                limitOutputs(sampleSpacing, _nerfOn ? AB_A : AB_B, _inputs, _outputs, nerfedOutputs);
                 // Digital outputs
                 _data.report.a = nerfedOutputs.a;
                 _data.report.b = nerfedOutputs.b;

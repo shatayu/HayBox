@@ -83,10 +83,11 @@ void XInputBackend::SendReport() {
             // Run gamemode logic.
             UpdateOutputs();
 
-            if(_nerfOn) {
+            //if(_nerfOn) {
+            if(true) {
                 //APPLY NERFS HERE
                 OutputState nerfedOutputs;
-                limitOutputs(sampleSpacing/4, _inputs, _outputs, nerfedOutputs);
+                limitOutputs(sampleSpacing/4, _nerfOn ? AB_A : AB_B, _inputs, _outputs, nerfedOutputs);
 
                 // Digital outputs
                 _report.a = nerfedOutputs.a;

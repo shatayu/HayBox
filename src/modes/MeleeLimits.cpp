@@ -11,10 +11,11 @@
 #define ANALOG_DASH_LEFT (128-64)/*this x coordinate will dash left*/
 #define ANALOG_DASH_RIGHT (128+64)/*this x coordinate will dash right*/
 #define ANALOG_SDI_LEFT (128-56)/*this x coordinate will sdi left*/
-#define ANALOG_SDI_RIGHT (128-56)/*this x coordinate will sdi right*/
+#define ANALOG_SDI_RIGHT (128+56)/*this x coordinate will sdi right*/
 #define MELEE_RIM_RAD2 6185/*if x^2+y^2 >= this, it's on the rim*/
 
 #define TRAVELTIME_EASY 6//ms
+#define TRAVELTIME_EASY2 4//ms
 #define TRAVELTIME_CROSS 12//ms to cross gate; unused
 #define TRAVELTIME_INTERNAL 12//ms for "easy" to "internal"; 2/3 frame
 #define TRAVELTIME_SLOW (4*16)//ms for tap SDI nerfing, 4 frames
@@ -31,7 +32,7 @@
 
 #define TIMELIMIT_QCIRC (16*6*250)//units of 4us; 6 frames
 
-#define TIMELIMIT_TAP (16*6*250)//units of 4us; 6 frames
+#define TIMELIMIT_TAP (16*12*250)//units of 4us; 6 frames
 #define TIMELIMIT_TAP_PLUS 36000//(16*9*250)//units of 4us; 9 frames ...the expression overflows on arduino for some reason
 
 #define TIMELIMIT_CARDIAG (16*8*250)//units of 4us; 8 frames
@@ -77,10 +78,14 @@ typedef struct {
     bool stale;
 } pivotzonestate;
 
-bool isEasy(const uint8_t x, const uint8_t y) {
+bool isEasy(const uint8_t x, const uint8_t y, const abtest whichAB) {
     //is it in the deadzone?
     if(x >= ANALOG_DEAD_MIN && x <= ANALOG_DEAD_MAX && y >= ANALOG_DEAD_MIN && y <= ANALOG_DEAD_MAX) {
-        return true;
+        if(whichAB == AB_A) {
+            return true;
+        } else {
+            return false;
+        }
     } else {
         //is it on the rim?
         const uint8_t xnorm = (x > ANALOG_STICK_NEUTRAL ? (x-ANALOG_STICK_NEUTRAL) : (ANALOG_STICK_NEUTRAL-x));
@@ -197,7 +202,7 @@ uint8_t isTapSDI(const sdizonestate zoneHistory[HISTORYLEN],
             if((zoneList[0] == 0) || (zoneList[1] == 0)) {//if one of the pairs of zones is zero, it's tapping a cardinal
                 output = output | BITS_SDI_TAP_CARD;
             } else if(popCur+popOne == 3) { //one is cardinal and the other is diagonal
-                //output = output | BITS_SDI_TAP_DIAG;
+                output = output | BITS_SDI_TAP_DIAG;
             }
         }
     }
@@ -265,6 +270,7 @@ void travelTimeCalc(const uint16_t samplesElapsed,
                     const uint8_t startY,
                     const uint8_t destX,
                     const uint8_t destY,
+                    const bool delay,
                     bool &oldChange,//apply tt if false; if the time gets too long, set it to true
                     uint8_t &outX,
                     uint8_t &outY) {
@@ -273,22 +279,32 @@ void travelTimeCalc(const uint16_t samplesElapsed,
         oldChange = true;
     }
     const uint16_t timeElapsed = samplesElapsed*sampleSpacing;//units of 4 us
-    const uint16_t travelTimeElapsed = timeElapsed/msTravel;//250 times the fraction of the travel time elapsed
+    if(!delay) {
+        const uint16_t travelTimeElapsed = timeElapsed/msTravel;//250 times the fraction of the travel time elapsed
 
-    //For the following 256s, they used to be 250, but AVR had division issues
-    // and would only be able to reach a value of 6 when returning to neutral,
-    // from the right only.
-    //Switching to 256 fixed it somehow, at the expense of 2.4% greater travel time.
-    const uint16_t cappedTT = min(256, travelTimeElapsed);
+        //For the following 256s, they used to be 250, but AVR had division issues
+            // and would only be able to reach a value of 6 when returning to neutral,
+            // from the right only.
+            //Switching to 256 fixed it somehow, at the expense of 2.4% greater travel time.
+            const uint16_t cappedTT = min(256, travelTimeElapsed);
 
-    const int16_t dX = ((destX-startX)*cappedTT)/256;
-    const int16_t dY = ((destY-startY)*cappedTT)/256;
+        const int16_t dX = ((destX-startX)*cappedTT)/256;
+        const int16_t dY = ((destY-startY)*cappedTT)/256;
 
-    const uint16_t newX = startX+dX;
-    const uint16_t newY = startY+dY;
+        const uint16_t newX = startX+dX;
+        const uint16_t newY = startY+dY;
 
-    outX = (uint8_t) newX;
-    outY = (uint8_t) newY;
+        outX = (uint8_t) newX;
+        outY = (uint8_t) newY;
+    } else {
+        if(timeElapsed <= msTravel*250) {
+            outX = startX;
+            outY = startY;
+        } else {
+            outX = destX;
+            outY = destY;
+        }
+    }
 
     if(oldChange || msTravel == 0) {
         outX = destX;
@@ -297,6 +313,7 @@ void travelTimeCalc(const uint16_t samplesElapsed,
 }
 
 void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
+                  const abtest whichAB,
                   const InputState &inputs,
                   const OutputState &rawOutputIn,
                   OutputState &finalOutput) {
@@ -349,9 +366,14 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     static uint8_t currentIndexA = 0;
     static uint8_t currentIndexSDI = 0;
 
+    //use travel time vs use delay
+    static bool useDelay = true;
+
     //calculate travel from the previous step
     uint8_t prelimAX;
     uint8_t prelimAY;
+    uint8_t prelimCX = rawOutputIn.rightStickX;
+    uint8_t prelimCY = rawOutputIn.rightStickY;
     travelTimeCalc(currentTime-aHistory[currentIndexA].timestamp,
                    sampleSpacing,
                    aHistory[currentIndexA].tt,
@@ -359,6 +381,7 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
                    aHistory[currentIndexA].y_start,
                    aHistory[currentIndexA].x_end,
                    aHistory[currentIndexA].y_end,
+                   useDelay,
                    oldA,
                    prelimAX,
                    prelimAY);
@@ -476,31 +499,31 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
             prelimAY = ANALOG_STICK_NEUTRAL;
             //make sure future cross axis travel time begins at the origin
             aHistory[currentIndexA].y_end = prelimAY;
+            //the following is disabled because the sdi threshold is actually 0.7
             //prevent the cardinal axis from dipping below the sdi threshold by preserving its coordinate
-            prelimAX = aHistory[currentIndexA].x_start;
+            //prelimAX = aHistory[currentIndexA].x_start;
             //make sure that future cardinal travel time begins where it was before
-            aHistory[currentIndexA].x_end = prelimAX;
+            //aHistory[currentIndexA].x_end = prelimAX;
             wankNerf = true;
         } else if(sdi & (ZONE_U | ZONE_D)) {
             //lock the cross axis
             prelimAX = ANALOG_STICK_NEUTRAL;
             //make sure future cross axis travel time begins at the origin
             aHistory[currentIndexA].x_end = prelimAX;
+            //the following is disabled because the sdi threshold is actually 0.7
             //prevent the cardinal axis from dipping below the sdi threshold by preserving its coordinate
-            prelimAY = aHistory[currentIndexA].y_start;
+            //prelimAY = aHistory[currentIndexA].y_start;
             //make sure that future cardinal travel time begins where it was before
-            aHistory[currentIndexA].y_end = prelimAY;
+            //aHistory[currentIndexA].y_end = prelimAY;
             wankNerf = true;
         }//one or the other should occur
-        /*
         //debug to see if SDI was detected
-        if(sdi & BITS_SDI_TAP_DIAG) {
+        if(sdi & BITS_SDI_TAP_CARD) {
             prelimCX = 200;
         }
         if(sdi & BITS_SDI_TAP_CRDG) {
             prelimCY = 200;
         }
-        */
     } else if(wankNerf) {
         aHistory[currentIndexA].x_end = aHistory[currentIndexA].x;
         aHistory[currentIndexA].y_end = aHistory[currentIndexA].y;
@@ -539,13 +562,22 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
         aHistory[currentIndexA].y_start = prelimAY;
 
         uint8_t prelimTT = TRAVELTIME_EASY;
+        //if the destination is not an "easy" coordinate
+        if(!isEasy(xIn, yIn, whichAB)) {
+            prelimTT = max(prelimTT, TRAVELTIME_INTERNAL);
+            useDelay = false;
+        } else {
+            if(whichAB == AB_A) {
+                useDelay = false;
+            } else {
+                prelimTT = TRAVELTIME_EASY2;
+                useDelay = true;
+            }
+        }
         //if cardinal tap SDI
         if(sdi & BITS_SDI_TAP_CARD) {
             prelimTT = max(prelimTT, TRAVELTIME_SLOW);
-        }
-        //if the destination is not an "easy" coordinate
-        if(!isEasy(xIn, yIn)) {
-            prelimTT = max(prelimTT, TRAVELTIME_INTERNAL);
+            useDelay = false;
         }
         /*
         //if the destination is on the opposite side from the current prelim coord
@@ -585,8 +617,8 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     finalOutput.rightStickClick = rawOutputIn.rightStickClick;
     finalOutput.leftStickX      = prelimAX;
     finalOutput.leftStickY      = prelimAY;
-    finalOutput.rightStickX     = rawOutputIn.rightStickX;
-    finalOutput.rightStickY     = rawOutputIn.rightStickY;
+    finalOutput.rightStickX     = prelimCX;
+    finalOutput.rightStickY     = prelimCY;
     finalOutput.triggerLAnalog  = rawOutputIn.triggerLAnalog;
     finalOutput.triggerRAnalog  = rawOutputIn.triggerRAnalog;
 }

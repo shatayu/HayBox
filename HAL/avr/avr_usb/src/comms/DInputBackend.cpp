@@ -74,10 +74,11 @@ void DInputBackend::SendReport() {
     // Run gamemode logic.
     UpdateOutputs();
 
-    if(_nerfOn) {
+    //if(_nerfOn) {
+    if(true) {
         //APPLY NERFS HERE
         OutputState nerfedOutputs;
-        limitOutputs(sampleSpacing, _inputs, _outputs, nerfedOutputs);
+        limitOutputs(sampleSpacing, _nerfOn ? AB_A : AB_B, _inputs, _outputs, nerfedOutputs);
 
         // Digital outputs
         _joystick->setButton(0, nerfedOutputs.b);
