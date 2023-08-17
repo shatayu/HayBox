@@ -484,7 +484,7 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
         timeSinceJump = 0;
     }
 
-    if(timeSinceJump*sampleSpacing < JUMP_TIME) {
+    if(timeSinceJump*sampleSpacing < JUMP_TIME && downUpJumping) {
         prelimAY = 255;
     } else {
         downUpJumping = false;
