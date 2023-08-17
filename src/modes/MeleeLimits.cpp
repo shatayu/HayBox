@@ -467,18 +467,18 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     }
 
     //if it's a crouch to upward coordinate too quickly, make Y jump even if a tilt was desired
-    static uint16_t timeSinceCrouch = 200;
+    static uint16_t timeSinceCrouch = 100;//must be < 65535 when multiplied by 500, the longest possible sampleSpacing, but bigger than the (timelimit/250)
     static bool downUpJumping;
-    static uint16_t timeSinceJump = 200;
+    static uint16_t timeSinceJump = 100;
 
     //increment timeSinceCrouch unless you have crouched
-    timeSinceCrouch = min(timeSinceCrouch+1, 200);
+    timeSinceCrouch = min(timeSinceCrouch+1, 100);
     if(prelimAY < ANALOG_CROUCH) {
         timeSinceCrouch = 0;
     }
 
     //increment timeSinceJump unless you want to trigger a jump
-    timeSinceJump = min(timeSinceJump+1, 200);
+    timeSinceJump = min(timeSinceJump+1, 100);
     if(timeSinceCrouch*sampleSpacing < TIMELIMIT_DOWNUP && prelimAY > ANALOG_DEAD_MAX && !downUpJumping) {
         downUpJumping = true;
         timeSinceJump = 0;
