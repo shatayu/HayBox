@@ -81,11 +81,13 @@ typedef struct {
 bool isEasy(const uint8_t x, const uint8_t y, const abtest whichAB) {
     //is it in the deadzone?
     if(x >= ANALOG_DEAD_MIN && x <= ANALOG_DEAD_MAX && y >= ANALOG_DEAD_MIN && y <= ANALOG_DEAD_MAX) {
+        /*
         if(whichAB == AB_A) {
             return true;
         } else {
             return false;
-        }
+        }*/
+        return false;
     } else {
         //is it on the rim?
         const uint8_t xnorm = (x > ANALOG_STICK_NEUTRAL ? (x-ANALOG_STICK_NEUTRAL) : (ANALOG_STICK_NEUTRAL-x));
@@ -98,6 +100,29 @@ bool isEasy(const uint8_t x, const uint8_t y, const abtest whichAB) {
             return false;
         }
     }
+}
+
+uint8_t getRandom() {
+    static uint8_t random = 0;
+    random = (random+7) % 16;
+    return random;
+}
+// 1 2 1 //4
+// 2 4 2 //8
+// 1 2 1 //4
+// totals up to 16
+void randomizeCoord(uint8_t &x, uint8_t &y) {
+    const uint8_t random = getRandom();
+    const uint8_t left = ((random ^ 0b0) & 0b11) == 0;
+    //middle is when random & 0b01 or 0b10
+    const uint8_t right = ((random ^ 0b11) & 0b11) == 0;
+    const uint8_t up = ((random ^ 0b0000) & 0b1100) == 0;
+    //middle is when random & 0b01xx or 0b10xx
+    const uint8_t down = ((random ^ 0b1100) & 0b1100) == 0;
+
+    //don't make changes when x or y are neutral or maximum
+    x = (x != ANALOG_STICK_NEUTRAL && x > ANALOG_STICK_MIN && x < ANALOG_STICK_MAX) ? x - left + right : x;
+    y = (y != ANALOG_STICK_NEUTRAL && y > ANALOG_STICK_MIN && y < ANALOG_STICK_MAX) ? y - down + up : y;
 }
 
 uint8_t lookback(const uint8_t currentIndex,
@@ -529,6 +554,9 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     } else if(wankNerf) {
         aHistory[currentIndexA].x_end = aHistory[currentIndexA].x;
         aHistory[currentIndexA].y_end = aHistory[currentIndexA].y;
+        if(prelimAX == ANALOG_STICK_NEUTRAL && prelimAY == ANALOG_STICK_NEUTRAL) {
+            wankNerf = false;
+        }
     }
 
     //==================================recording history======================================//
@@ -554,12 +582,17 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
 
         const uint8_t xIn = rawOutputIn.leftStickX;
         const uint8_t yIn = rawOutputIn.leftStickY;
+        uint8_t xInRand = xIn;
+        uint8_t yInRand = yIn;
+        if(whichAB == AB_A) {//default to random
+            randomizeCoord(xInRand, yInRand);
+        }
 
         aHistory[currentIndexA].timestamp = currentTime;
         aHistory[currentIndexA].x = xIn;
         aHistory[currentIndexA].y = yIn;
-        aHistory[currentIndexA].x_end = xIn;
-        aHistory[currentIndexA].y_end = yIn;
+        aHistory[currentIndexA].x_end = xInRand;
+        aHistory[currentIndexA].y_end = yInRand;
         aHistory[currentIndexA].x_start = prelimAX;
         aHistory[currentIndexA].y_start = prelimAY;
 
@@ -569,12 +602,12 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
             prelimTT = max(prelimTT, TRAVELTIME_INTERNAL);
             useDelay = false;
         } else {
-            if(whichAB == AB_A) {
-                useDelay = false;
-            } else {
+            //if(whichAB == AB_A) {//use normal travel time
+            //    useDelay = false;
+            //} else {//use a linear jump
                 prelimTT = TRAVELTIME_EASY2;
                 useDelay = true;
-            }
+            //}
         }
         //if cardinal tap SDI
         if(sdi & BITS_SDI_TAP_CARD) {
@@ -597,6 +630,9 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
             prelimTT = 0;
         }
         aHistory[currentIndexA].tt = prelimTT;
+    } else {
+        //we want to always increment the rng one way or another...
+        getRandom();
     }
 
     //===============================applying the nerfed coords=================================//
