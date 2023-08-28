@@ -474,6 +474,12 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     }
 
     //actually apply the nerfs
+    //debug c-stick output
+    /*
+    if(direction != P_None) {
+        prelimCY = 255;
+    }
+    */
     //if it's a downtilt coordinate, make Y smash down
     if(direction != P_None && prelimAY < ANALOG_DEAD_MIN) {
         prelimAY = 0;

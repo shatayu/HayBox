@@ -67,14 +67,16 @@ void Melee20Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
     bool shield_button_pressed = inputs.l || inputs.r || inputs.lightshield || inputs.midshield;
     if (directions.diagonal) {
         // q1/2 = 7000 7000
-        outputs.leftStickX = 128 + (directions.x * 56);
-        outputs.leftStickY = 128 + (directions.y * 56);
-        // L, R, LS, and MS + q3/4 = 7000 6875 (For vanilla shield drop. Gives 44.5
+        // actually 6875 7125 to account for randomness
+        outputs.leftStickX = 128 + (directions.x * 55);
+        outputs.leftStickY = 128 + (directions.y * 57);
+        // L, R, LS, and MS + q3/4 = 7125 6875 (For vanilla shield drop. Gives 44.5
         // degree wavedash). Also used as default q3/4 diagonal if crouch walk option select is
         // enabled.
+        // actually 7250 6750 to account for randomness
         if (directions.y == -1 && (shield_button_pressed || _options.crouch_walk_os)) {
-            outputs.leftStickX = 128 + (directions.x * 57);
-            outputs.leftStickY = 128 + (directions.y * 55);
+            outputs.leftStickX = 128 + (directions.x * 58);
+            outputs.leftStickY = 128 + (directions.y * 54);
         }
     }
 
@@ -204,7 +206,7 @@ void Melee20Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
         /* Up B angles */
         if (directions.diagonal && !shield_button_pressed) {
             // 67.0362 - 3125 7375 = 25 59
-            outputs.leftStickX = 128 + (directions.x * 25);
+            outputs.leftStickX = 128 + (directions.x * 26);//25 is fuzzed into 24 = no-turnaround-yoshi-backwards-dj
             outputs.leftStickY = 128 + (directions.y * 59);
             // 62.62896 - 3625 7000 (62.62) = 29 56
             if (!_options.teleport_coords) {
