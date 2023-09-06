@@ -415,10 +415,12 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     //this only fully works for neutral socd right now
     //this is a catchall to force the latest output
     //however, we do want to make it be overridden by the sdi nerfs so this happens first
+    /*
     if((inputs.left != inputs.right) && (inputs.down != inputs.up) && inputs.down && (inputs.r || inputs.l)) {
         prelimAX = rawOutputIn.leftStickX;
         prelimAY = rawOutputIn.leftStickY;
     }
+    */
 
     //detect an input that gives >50% pivot probability given travel time
     //if we are in a new pivot zone, record the new zone
@@ -634,9 +636,11 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
         //If we're doing a diagonal airdodge, make travel time instant to prevent inconsistent wavedash angles
         //this only fully works for neutral socd right now
         //it doesn't fully work either, so I'm going to put a catchall in the outer loop
+        /*
         if((inputs.left != inputs.right) && (inputs.down != inputs.up) && inputs.down && (inputs.r || inputs.l)) {
             prelimTT = 0;
         }
+        */
         aHistory[currentIndexA].tt = prelimTT;
     } else {
         //we want to always increment the rng one way or another...
