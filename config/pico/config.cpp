@@ -98,7 +98,7 @@ KeyboardMode *current_kb_mode = nullptr;
 \
     { &InputState::select,      10},\
     { &InputState::start,       0 },\
-    { &InputState::home,        11},\
+    { &InputState::home,        9},\
 \
     { &InputState::c_left,      13},\
     { &InputState::c_up,        12},\

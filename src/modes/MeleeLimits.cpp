@@ -590,7 +590,8 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
         const uint8_t yIn = rawOutputIn.leftStickY;
         uint8_t xInRand = xIn;
         uint8_t yInRand = yIn;
-        if(whichAB == AB_A) {//default to random
+        //if(whichAB == AB_A) {//default to random
+        if(true) {
             randomizeCoord(xInRand, yInRand);
         }
 
@@ -608,12 +609,13 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
             prelimTT = max(prelimTT, TRAVELTIME_INTERNAL);
             useDelay = false;
         } else {
-            //if(whichAB == AB_A) {//use normal travel time
-            //    useDelay = false;
-            //} else {//use a linear jump
+            if(whichAB == AB_A) {//4ms linear jump
                 prelimTT = TRAVELTIME_EASY2;
                 useDelay = true;
-            //}
+            } else {//no travel time for rim for the B version
+                prelimTT = 0;
+                useDelay = true;
+            }
         }
         //if cardinal tap SDI
         if(sdi & BITS_SDI_TAP_CARD) {
