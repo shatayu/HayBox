@@ -28,11 +28,11 @@ Current nerfs (**SUBJECT TO CHANGE**)
   * Will we stick with this? There are potential alternatives that have been suggested, though they are significantly harder to implement:
     * 2ip no reactivation that has significantly increased travel time when both directions are pressed
     * 2ip no reactivation vertically, but not horizontally. (possibly with the above); this would need an additional SDI nerf similar to the B0XX ones.
-* ~~Left stick travel time to the center or rim: 6ms (just over 1/3 frame)~~
+* Left stick travel time to the center or rim: 6ms (just over 1/3 frame)
   * Travel time exists to add some reaction time parity between sticks and buttons, and to also make digital inputs subject to at least some of the same polling timing considerations as sticks.
   * This value is based off measured center-to-rim stick speeds from various players, as well as a little bit of rectangle testing before where a player remarked that even slightly longer travel time felt worse.
   * Because the travel is linear, this delays inputs by 3 ms on average, but it may be slightly more depending on where the threshold is along the travel distance. For dashdancing turnarounds, this is more like a 5ms delay, but for dashing from standing it's more like 2ms.
-* Left stick movements to rim coordinates delayed by 4ms (1/4 frame).
+* ~~Left stick movements to rim coordinates delayed by 4ms (1/4 frame).~~
   * This removes the risk of polling errors for rising edges but slightly slows reaction time.
 * Left stick travel time to ~~non-center~~ non-rim coordinates including the center: 12ms (2/3 frame)
   * This is longer than the rim travel times because it takes longer, on a stick, to pinpoint a non-rim position.
@@ -40,8 +40,6 @@ Current nerfs (**SUBJECT TO CHANGE**)
   * There's one other issue with this, though, which is that most of the rectangle angles are not rim coordinates even if they're used in a context where a GCC user would have their stick on the rim, so this is a little more impactful than is strictly ideal.
   * That said, it takes a lot longer than that for the stick to settle when inputting a tilt.
   * It now also applies to the center, which somewhat restores polling issues if you try to go for frame-perfect full-momentum nairs.
-* Zero travel time when digital shielding and input is downward-diagonal, to make wavedashes consistent
-  * Because the button that initiates wavedashes itself modifies the ModX and ModY angles, travel time would guarantee inconsistent angles.
 * 4 frame travel time for cardinal tapping SDI (numpad notation: 5656...) faster than 10 presses/s, but not for taps shorter than half a frame for switch bounce leniency.
   * This is implemented because with neutral SOCD it's relatively easy to get double-rate mashing. To mash right with one full cycle per press AND per release, press right, press left, release left, release right (and repeat).
   * By merely increasing the travel time and not locking out, this mitigates SDI without significantly affecting aerial drift control via rapid tapping.
@@ -67,6 +65,7 @@ Current nerfs (**SUBJECT TO CHANGE**)
   * This detects an empty pivot that is >50% probability of success: a 0.5 to 1.5 frame tap opposite of the last direction pressed.
   * In each axis, a tilt that is not in the same direction as the last tap (so you can still mody pivot) gets promoted to a full magnitude in that direction, as long as < 8 frames have elapsed since the empty pivot.
   * This corresponds with the difficulty of controlling the stick after an empty pivot movement.
+  * For upward directions, Y is maximized to prevent up-angled ftilt. For downward directions, it attempts to preserve the angle so wavedashes are not randomly affected.
 
 In addition to nerfs, it offers several features:
 

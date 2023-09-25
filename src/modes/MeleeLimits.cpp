@@ -28,16 +28,16 @@
 #define TIMELIMIT_DEBOUNCE (6*250)//units of 4us; 6ms;
 #define TIMELIMIT_SIMUL (2*250)//units of 4us; 3ms: if the latest inputs are less than 2 ms apart then don't nerf cardiag
 
-#define TIMELIMIT_DASH (16*15*250)//units of 4us; last dash time prior to a pivot input; 15 frames
+//not used #define TIMELIMIT_DASH 60000//(16*15*250)//units of 4us; last dash time prior to a pivot input; 15 frames
 
-#define TIMELIMIT_QCIRC (16*6*250)//units of 4us; 6 frames
+//not used #define TIMELIMIT_QCIRC 24000//(16*6*250)//units of 4us; 6 frames
 
-#define TIMELIMIT_TAP (16*6*250)//units of 4us; 6 frames
-#define TIMELIMIT_TAP_PLUS 36000//(16*9*250)//units of 4us; 9 frames ...the expression overflows on arduino for some reason
+#define TIMELIMIT_TAP 22000//(16*5.5*250)//units of 4us; 5.5 frames
+#define TIMELIMIT_TAP_PLUS 34000//(16*8.5*250)//units of 4us; 3 additional frames
 
-#define TIMELIMIT_CARDIAG (16*8*250)//units of 4us; 8 frames
+#define TIMELIMIT_CARDIAG 32000//(16*8*250)//units of 4us; 8 frames
 
-#define TIMELIMIT_PIVOTTILT 32000//(8*16*250)//units of 4us; 8 frames
+#define TIMELIMIT_PIVOTTILT 32000//(16*8*250)//units of 4us; 8 frames
 
 enum pivotdir{P_None, P_Leftright, P_Rightleft};
 
@@ -95,7 +95,15 @@ bool isEasy(const uint8_t x, const uint8_t y, const abtest whichAB) {
         const uint16_t xsquared = xnorm*xnorm;
         const uint16_t ysquared = ynorm*ynorm;
         if((xsquared+ysquared) >= MELEE_RIM_RAD2) {
-            return true;
+            //is it within 6 units of the diagonal?
+            const uint8_t diagMax = max(xnorm, ynorm);
+            const uint8_t diagMin = max(xnorm, ynorm);
+            const uint8_t diff = diagMax - diagMin;
+            if(diff <= 6) {
+                return true;
+            } else {
+                return false;
+            }
         } else {
             return false;
         }
@@ -120,9 +128,21 @@ void randomizeCoord(uint8_t &x, uint8_t &y) {
     //middle is when random & 0b01xx or 0b10xx
     const uint8_t down = ((random ^ 0b1100) & 0b1100) == 0;
 
-    //don't make changes when x or y are neutral or maximum
-    x = (x != ANALOG_STICK_NEUTRAL && x > ANALOG_STICK_MIN && x < ANALOG_STICK_MAX) ? x - left + right : x;
-    y = (y != ANALOG_STICK_NEUTRAL && y > ANALOG_STICK_MIN && y < ANALOG_STICK_MAX) ? y - down + up : y;
+    //don't randomize when x or y are neutral, except for 1.0 cardinals
+    if(y > ANALOG_STICK_MAX || y < ANALOG_STICK_MIN) {//any chance at 1.0 cardinals vertically
+        //50% chance of not getting 1.0 (done by restricting magnitude)
+        //if you do it by perturbing in x, then it might not work on ucf 0.84+ with y > 80
+        y = (left+right > 0) ? max(ANALOG_STICK_MIN+1, min(ANALOG_STICK_MAX-1, y)) : y;
+    } else {// not 1.0 vertically
+        x = (x != ANALOG_STICK_NEUTRAL) ? x - left + right : x;
+    }
+    if(x > ANALOG_STICK_MAX || x < ANALOG_STICK_MIN) {//any chance at 1.0 cardinals horizontally
+        //50% chance of not getting 1.0 (done by restricting magnitude)
+        //if you do it by perturbing in y, then it might not work on ucf 0.84+ with x > 80
+        x = (up+down > 0) ? max(ANALOG_STICK_MIN+1, min(ANALOG_STICK_MAX-1, x)) : x;
+    } else {// not 1.0 horizontally
+        y = (y != ANALOG_STICK_NEUTRAL) ? y - down + up : y;
+    }
 }
 
 uint8_t lookback(const uint8_t currentIndex,
@@ -291,6 +311,8 @@ uint8_t isTapSDI(const sdizonestate zoneHistory[HISTORYLEN],
 void travelTimeCalc(const uint16_t samplesElapsed,
                     const uint16_t sampleSpacing,//units of 4us
                     const uint8_t msTravel,
+                    const uint8_t targetX,
+                    const uint8_t targetY,
                     const uint8_t startX,
                     const uint8_t startY,
                     const uint8_t destX,
@@ -334,6 +356,18 @@ void travelTimeCalc(const uint16_t samplesElapsed,
     if(oldChange || msTravel == 0) {
         outX = destX;
         outY = destY;
+    }
+
+    //one frame after travel time completes, snap to 1.0 cardinals
+    const uint16_t cardinalDelay = msTravel + 16;
+    if((timeElapsed > cardinalDelay) || oldChange) {
+        //we disabled 1.0 cardinals by reducing the magnitude to 79, so we restore them here
+        if(targetX <= ANALOG_STICK_MIN || targetX >= ANALOG_STICK_MAX) {
+            outX = targetX;
+        }
+        if(targetY <= ANALOG_STICK_MIN || targetY >= ANALOG_STICK_MAX) {
+            outY = targetY;
+        }
     }
 }
 
@@ -402,6 +436,8 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     travelTimeCalc(currentTime-aHistory[currentIndexA].timestamp,
                    sampleSpacing,
                    aHistory[currentIndexA].tt,
+                   aHistory[currentIndexA].x,
+                   aHistory[currentIndexA].y,
                    aHistory[currentIndexA].x_start,
                    aHistory[currentIndexA].y_start,
                    aHistory[currentIndexA].x_end,
@@ -482,22 +518,55 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
         prelimCY = 255;
     }
     */
-    //if it's a downtilt coordinate, make Y smash down
+    //if it's a downtilt coordinate...
+    bool pivotTilt = false;
+    bool upTilt = false;
     if(direction != P_None && prelimAY < ANALOG_DEAD_MIN) {
-        prelimAY = 0;
+        //prelimAY = 0;
+        pivotTilt = true;
     }
-    //if it's a uptilt coordinate, make Y jump
+    //if it's a uptilt coordinate...
     if(direction != P_None && prelimAY > ANALOG_DEAD_MAX) {
-        prelimAY = 255;
+        //prelimAY = 255;
+        pivotTilt = true;
+        upTilt = true;
     }
     //if it's a ftilt coordinate, make X dash/smash
     //we need to use raw input in instead of prelim because that gets caught by travel time for a moment
     if(direction == P_Leftright && rawOutputIn.leftStickX < ANALOG_DEAD_MIN) {
-        prelimAX = 0;
+        //prelimAX = 0;
+        pivotTilt = true;
     }
     if(direction == P_Rightleft && rawOutputIn.leftStickX > ANALOG_DEAD_MAX) {
-        prelimAX = 255;
+        //prelimAX = 255;
+        pivotTilt = true;
     }
+
+    //If there's a pivot tilt, preserve the angle as best as possible but maximize the radius
+    int16_t xCoord = max(-127, min(127, prelimAX - ANALOG_STICK_NEUTRAL));//-127 to 127
+    int16_t yCoord = max(-127, min(127, prelimAY - ANALOG_STICK_NEUTRAL));//-127 to 127
+
+    uint16_t maxCoord = max(abs(xCoord), abs(yCoord));
+    bool maxedOut = false;
+    uint8_t stretchMult = 2;
+    for(int i = 2; i < 12; i++) {//23*11/2 is over 127
+        uint16_t tempMax = (maxCoord*i) >> 1;
+        if(tempMax > 127 && !maxedOut) {
+            maxedOut = true;
+            stretchMult = i-1;
+        }
+    }
+    if(pivotTilt) {
+        int16_t tempX = (xCoord*stretchMult) >> 1;
+        int16_t tempY = (yCoord*stretchMult) >> 1;
+        prelimAX = ANALOG_STICK_NEUTRAL + tempX;
+        if(!upTilt) {//preserve angles for downward ones only
+            prelimAY = ANALOG_STICK_NEUTRAL + tempY;
+        } else {//prevent pivot up-angled ftilt
+            prelimAY = 255;
+        }
+    }
+
 
     //if it's a crouch to upward coordinate too quickly, make Y jump even if a tilt was desired
     static uint16_t timeSinceCrouch = 100;//must be < 65535 when multiplied by 500, the longest possible sampleSpacing, but bigger than the (timelimit/250)
@@ -592,10 +661,7 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
         const uint8_t yIn = rawOutputIn.leftStickY;
         uint8_t xInRand = xIn;
         uint8_t yInRand = yIn;
-        //if(whichAB == AB_A) {//default to random
-        if(true) {
-            randomizeCoord(xInRand, yInRand);
-        }
+        randomizeCoord(xInRand, yInRand);
 
         aHistory[currentIndexA].timestamp = currentTime;
         aHistory[currentIndexA].x = xIn;
@@ -611,6 +677,9 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
             prelimTT = max(prelimTT, TRAVELTIME_INTERNAL);
             useDelay = false;
         } else {
+            prelimTT = TRAVELTIME_EASY;
+            useDelay = false;
+            /*
             if(whichAB == AB_A) {//4ms linear jump
                 prelimTT = TRAVELTIME_EASY2;
                 useDelay = true;
@@ -618,6 +687,7 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
                 prelimTT = 0;
                 useDelay = true;
             }
+            */
         }
         //if cardinal tap SDI
         if(sdi & BITS_SDI_TAP_CARD) {
