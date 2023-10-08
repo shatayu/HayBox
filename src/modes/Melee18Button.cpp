@@ -15,11 +15,11 @@ Melee18Button::Melee18Button(socd::SocdType socd_type, Melee18ButtonOptions opti
     };
 
     _options = options;
-    horizontal_socd = false;
+    _horizontal_socd = false;
 }
 
 void Melee18Button::HandleSocd(InputState &inputs) {
-    horizontal_socd = inputs.left && inputs.right;
+    _horizontal_socd = inputs.left && inputs.right;
     InputMode::HandleSocd(inputs);
 }
 

@@ -17,7 +17,7 @@ class Melee18Button : public ControllerMode {
 
   private:
     Melee18ButtonOptions _options;
-    bool horizontal_socd;
+    bool _horizontal_socd;
 
     void HandleSocd(InputState &inputs);
     void UpdateDigitalOutputs(InputState &inputs, OutputState &outputs);

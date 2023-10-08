@@ -8,6 +8,7 @@
 #define ANALOG_DEAD_MAX (128+22)/*this is in the deadzone*/
 #define ANALOG_STICK_MAX 208
 #define ANALOG_CROUCH (128-50)/*this y coordinate will hold a crouch*/
+#define ANALOG_TAPJUMP (128+53)/*this Y coordinate will tap jump always (running is less)*/
 #define ANALOG_DASH_LEFT (128-64)/*this x coordinate will dash left*/
 #define ANALOG_DASH_RIGHT (128+64)/*this x coordinate will dash right*/
 #define ANALOG_SDI_LEFT (128-56)/*this x coordinate will sdi left*/
@@ -128,18 +129,22 @@ void randomizeCoord(uint8_t &x, uint8_t &y) {
     //middle is when random & 0b01xx or 0b10xx
     const uint8_t down = ((random ^ 0b1100) & 0b1100) == 0;
 
-    //don't randomize when x or y are neutral, except for 1.0 cardinals
+    //don't randomize when x or y are neutral, /*except for 1.0 cardinals*/
     if(y > ANALOG_STICK_MAX || y < ANALOG_STICK_MIN) {//any chance at 1.0 cardinals vertically
+        /*
         //50% chance of not getting 1.0 (done by restricting magnitude)
         //if you do it by perturbing in x, then it might not work on ucf 0.84+ with y > 80
         y = (left+right > 0) ? max(ANALOG_STICK_MIN+1, min(ANALOG_STICK_MAX-1, y)) : y;
+        */
     } else {// not 1.0 vertically
         x = (x != ANALOG_STICK_NEUTRAL) ? x - left + right : x;
     }
     if(x > ANALOG_STICK_MAX || x < ANALOG_STICK_MIN) {//any chance at 1.0 cardinals horizontally
+        /*
         //50% chance of not getting 1.0 (done by restricting magnitude)
         //if you do it by perturbing in y, then it might not work on ucf 0.84+ with x > 80
         x = (up+down > 0) ? max(ANALOG_STICK_MIN+1, min(ANALOG_STICK_MAX-1, x)) : x;
+        */
     } else {// not 1.0 horizontally
         y = (y != ANALOG_STICK_NEUTRAL) ? y - down + up : y;
     }
@@ -357,18 +362,6 @@ void travelTimeCalc(const uint16_t samplesElapsed,
         outX = destX;
         outY = destY;
     }
-
-    //one frame after travel time completes, snap to 1.0 cardinals
-    const uint16_t cardinalDelay = msTravel + 16;
-    if((timeElapsed > cardinalDelay) || oldChange) {
-        //we disabled 1.0 cardinals by reducing the magnitude to 79, so we restore them here
-        if(targetX <= ANALOG_STICK_MIN || targetX >= ANALOG_STICK_MAX) {
-            outX = targetX;
-        }
-        if(targetY <= ANALOG_STICK_MIN || targetY >= ANALOG_STICK_MAX) {
-            outY = targetY;
-        }
-    }
 }
 
 void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
@@ -581,7 +574,7 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
 
     //increment timeSinceJump unless you want to trigger a jump
     timeSinceJump = min(timeSinceJump+1, 100);
-    if(timeSinceCrouch*sampleSpacing < TIMELIMIT_DOWNUP && prelimAY > ANALOG_DEAD_MAX && !downUpJumping) {
+    if(timeSinceCrouch*sampleSpacing < TIMELIMIT_DOWNUP && prelimAY > ANALOG_DEAD_MAX && prelimAY < ANALOG_TAPJUMP && !downUpJumping) {
         downUpJumping = true;
         timeSinceJump = 0;
     }
