@@ -129,25 +129,9 @@ void randomizeCoord(uint8_t &x, uint8_t &y) {
     //middle is when random & 0b01xx or 0b10xx
     const uint8_t down = ((random ^ 0b1100) & 0b1100) == 0;
 
-    //don't randomize when x or y are neutral, /*except for 1.0 cardinals*/
-    if(y > ANALOG_STICK_MAX || y < ANALOG_STICK_MIN) {//any chance at 1.0 cardinals vertically
-        /*
-        //50% chance of not getting 1.0 (done by restricting magnitude)
-        //if you do it by perturbing in x, then it might not work on ucf 0.84+ with y > 80
-        y = (left+right > 0) ? max(ANALOG_STICK_MIN+1, min(ANALOG_STICK_MAX-1, y)) : y;
-        */
-    } else {// not 1.0 vertically
-        x = (x != ANALOG_STICK_NEUTRAL) ? x - left + right : x;
-    }
-    if(x > ANALOG_STICK_MAX || x < ANALOG_STICK_MIN) {//any chance at 1.0 cardinals horizontally
-        /*
-        //50% chance of not getting 1.0 (done by restricting magnitude)
-        //if you do it by perturbing in y, then it might not work on ucf 0.84+ with x > 80
-        x = (up+down > 0) ? max(ANALOG_STICK_MIN+1, min(ANALOG_STICK_MAX-1, x)) : x;
-        */
-    } else {// not 1.0 horizontally
-        y = (y != ANALOG_STICK_NEUTRAL) ? y - down + up : y;
-    }
+    //don't randomize when x or y are neutral
+    x = (x != ANALOG_STICK_NEUTRAL) ? x - left + right : x;
+    y = (y != ANALOG_STICK_NEUTRAL) ? y - down + up : y;
 }
 
 uint8_t lookback(const uint8_t currentIndex,

@@ -60,9 +60,9 @@ void Melee20Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
         inputs.c_right,
         inputs.c_down,
         inputs.c_up,
-        ANALOG_STICK_MIN,
+        /*ANALOG_STICK_MIN*/ANALOG_STICK_NEUTRAL - 112,
         ANALOG_STICK_NEUTRAL,
-        ANALOG_STICK_MAX,
+        /*ANALOG_STICK_MAX*/ANALOG_STICK_NEUTRAL + 112,
         outputs
     );
 
