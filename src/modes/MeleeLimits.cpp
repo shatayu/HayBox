@@ -13,10 +13,13 @@
 #define ANALOG_DASH_RIGHT (128+64)/*this x coordinate will dash right*/
 #define ANALOG_SDI_LEFT (128-56)/*this x coordinate will sdi left*/
 #define ANALOG_SDI_RIGHT (128+56)/*this x coordinate will sdi right*/
-#define MELEE_RIM_RAD2 6185/*if x^2+y^2 >= this, it's on the rim*/
+#define MELEE_RIM_RAD1 6185/*if x^2+y^2 >= this, it's on the rim and 6ms*/
+#define MELEE_RIM_RAD2 6858/*if x^2+y^2 >= this, it's past the rim and 7ms*/
+#define MELEE_RIM_RAD3 8979/*if x^2+y^2 >= this, it's past the rim and 8ms*/
 
-#define TRAVELTIME_EASY 6//ms
-#define TRAVELTIME_EASY2 4//ms
+#define TRAVELTIME_EASY1 6//ms
+#define TRAVELTIME_EASY2 7//ms
+#define TRAVELTIME_EASY3 8//ms
 #define TRAVELTIME_CROSS 12//ms to cross gate; unused
 #define TRAVELTIME_INTERNAL 12//ms for "easy" to "internal"; 2/3 frame
 #define TRAVELTIME_SLOW (4*16)//ms for tap SDI nerfing, 4 frames
@@ -81,25 +84,32 @@ typedef struct {
     bool stale;
 } pivotzonestate;
 
-bool isEasy(const uint8_t x, const uint8_t y) {
+uint8_t isEasy(const uint8_t x, const uint8_t y) {
     //is it on the rim?
     const uint8_t xnorm = (x > ANALOG_STICK_NEUTRAL ? (x-ANALOG_STICK_NEUTRAL) : (ANALOG_STICK_NEUTRAL-x));
     const uint8_t ynorm = (y > ANALOG_STICK_NEUTRAL ? (y-ANALOG_STICK_NEUTRAL) : (ANALOG_STICK_NEUTRAL-y));
     const uint16_t xsquared = xnorm*xnorm;
     const uint16_t ysquared = ynorm*ynorm;
-    if((xsquared+ysquared) >= MELEE_RIM_RAD2) {
+    const uint16_t radSquared = xsquared+ysquared;
+    if((radSquared) >= MELEE_RIM_RAD1) {
         //is it within 3 units of the diagonal? or is it a cardinal?
         const uint8_t diagMax = max(xnorm, ynorm);
         const uint8_t diagMin = min(xnorm, ynorm);
         const uint8_t diff = diagMax - diagMin;
         if(diff <= 6 || xnorm == 0 || ynorm == 0) {
             //if so, yes
-            return true;
+            if(radSquared >= MELEE_RIM_RAD3) {
+                return 3;
+            } else if(radSquared >= MELEE_RIM_RAD2) {
+                return 2;
+            } else {
+                return 1;
+            }
         } else {
-            return false;
+            return 0;
         }
     } else {
-        return false;
+        return 0;
     }
 }
 
@@ -422,9 +432,6 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     static uint8_t currentIndexA = 0;
     static uint8_t currentIndexSDI = 0;
 
-    //use travel time vs use delay
-    static bool useDelay = true;
-
     //calculate travel from the previous step
     uint8_t prelimAX;
     uint8_t prelimAY;
@@ -439,7 +446,7 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
                    aHistory[currentIndexA].y_start,
                    aHistory[currentIndexA].x_end,
                    aHistory[currentIndexA].y_end,
-                   useDelay,
+                   /*useDelay*/false,
                    oldA,
                    prelimAX,
                    prelimAY);
@@ -670,28 +677,21 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
         aHistory[currentIndexA].x_start = prelimAX;
         aHistory[currentIndexA].y_start = prelimAY;
 
-        uint8_t prelimTT = TRAVELTIME_EASY;
+        uint8_t prelimTT = TRAVELTIME_EASY1;
         //if the destination is not an "easy" coordinate
-        if(!isEasy(xIn, yIn)) {
-            prelimTT = max(prelimTT, TRAVELTIME_INTERNAL);
-            useDelay = false;
+        const uint8_t easiness = isEasy(xIn, yIn);
+        if(easiness == 1) {
+            prelimTT = TRAVELTIME_EASY1;
+        } else if(easiness == 2) {
+            prelimTT = TRAVELTIME_EASY2;
+        } else if(easiness == 3) {
+            prelimTT = TRAVELTIME_EASY3;
         } else {
-            prelimTT = TRAVELTIME_EASY;
-            useDelay = false;
-            /*
-            if(whichAB == AB_A) {//4ms linear jump
-                prelimTT = TRAVELTIME_EASY2;
-                useDelay = true;
-            } else {//no travel time for rim for the B version
-                prelimTT = 0;
-                useDelay = true;
-            }
-            */
+            prelimTT = TRAVELTIME_INTERNAL;
         }
         //if cardinal tap SDI
         if(sdi & BITS_SDI_TAP_CARD) {
             prelimTT = max(prelimTT, TRAVELTIME_SLOW);
-            useDelay = false;
         }
         /*
         //if the destination is on the opposite side from the current prelim coord
