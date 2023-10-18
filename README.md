@@ -17,7 +17,7 @@ Particular strengths of rectangle controllers we had in mind when designing the 
 Current nerfs (**SUBJECT TO CHANGE**)
 
 * Neutral SOCD
-  * Neutral SOCD helps mitigate easy three-consecutive-input SDI
+  * Neutral SOCD helps mitigate easy three-consecutive-input SDI, though not completely.
   * Neutral SOCD also helps make long-distance dashdancing a little riskier, because there are two motions required to turn around when you want to change direction. Thus you have an increased risk of getting stuck in a skidding turnaround when you try to turn around right at the end of initial dash. Alternatively, you can release the forward direction early, but that sacrifices distance.
   * Many consider this to be slightly better than 2ip no-reactivation for controlling aerial drift, because you can never lock yourself out of drift.
   * It affects away-then-in ledgedashes, making them much harder to be frame-perfect similar to on sticks.
@@ -28,18 +28,15 @@ Current nerfs (**SUBJECT TO CHANGE**)
   * Will we stick with this? There are potential alternatives that have been suggested, though they are significantly harder to implement:
     * 2ip no reactivation that has significantly increased travel time when both directions are pressed
     * 2ip no reactivation vertically, but not horizontally. (possibly with the above); this would need an additional SDI nerf similar to the B0XX ones.
-* Left stick travel time to the center or rim: 6ms (just over 1/3 frame)
+* Left stick travel time to the center or diagonal rim coordinates: 6ms (just over 1/3 frame)
   * Travel time exists to add some reaction time parity between sticks and buttons, and to also make digital inputs subject to at least some of the same polling timing considerations as sticks.
   * This value is based off measured center-to-rim stick speeds from various players, as well as a little bit of rectangle testing before where a player remarked that even slightly longer travel time felt worse.
   * Because the travel is linear, this delays inputs by 3 ms on average, but it may be slightly more depending on where the threshold is along the travel distance. For dashdancing turnarounds, this is more like a 5ms delay, but for dashing from standing it's more like 2ms.
 * ~~Left stick movements to rim coordinates delayed by 4ms (1/4 frame).~~
   * This removes the risk of polling errors for rising edges but slightly slows reaction time.
-* Left stick travel time to ~~non-center~~ non-rim coordinates including the center: 12ms (2/3 frame)
+* Left stick travel time to ~~non-center~~ non-cardinal or diagonal rim coordinates including the center: 12ms (2/3 frame)
   * This is longer than the rim travel times because it takes longer, on a stick, to pinpoint a non-rim position.
   * This used to be 16 ms, a whole frame, but users noted that it made timing button inputs for tilts harder. On a stick, even if it takes longer to get to a tilt location, you get feedback from your senses of when the motion is completed, but that's not true of button presses with simulated travel time.
-  * There's one other issue with this, though, which is that most of the rectangle angles are not rim coordinates even if they're used in a context where a GCC user would have their stick on the rim, so this is a little more impactful than is strictly ideal.
-  * That said, it takes a lot longer than that for the stick to settle when inputting a tilt.
-  * It now also applies to the center, which somewhat restores polling issues if you try to go for frame-perfect full-momentum nairs.
 * 4 frame travel time for cardinal tapping SDI (numpad notation: 5656...) faster than 10 presses/s, but not for taps shorter than half a frame for switch bounce leniency.
   * This is implemented because with neutral SOCD it's relatively easy to get double-rate mashing. To mash right with one full cycle per press AND per release, press right, press left, release left, release right (and repeat).
   * By merely increasing the travel time and not locking out, this mitigates SDI without significantly affecting aerial drift control via rapid tapping.
@@ -49,10 +46,12 @@ Current nerfs (**SUBJECT TO CHANGE**)
   * However, at the moment it's disabled because it affects shield drop fastfall.
   * We would like users to test whether abusing diagonal tap SDI is noticeably impactful in game.
   * In the future this may be re-enabled with a different time window.
-* Lockout for cardinal + diagonal tapping SDI (numpad notation: 56356**3**) faster than 7.5 presses/s (8f)
+* Lockout for cardinal + diagonal tapping SDI (numpad notation: 56356**3**) faster than 7.5 presses/s (5.5f)
   * The last remaining SDI method gets you a cardinal and a diagonal SDI pulse for every press, by plinking two adjacent cardinals.
   * This is basically repeated quarter-circle SDI in a way that's not really doable on a stick.
   * It is occasionally impactful in game: one person reported that their ledgedash technique, which involves dropping from ledge with down then in, releasing, and pressing diagonal again to airdodge, was impacted.
+* Lockout for cardinal-diagonal-opposite diagonal (numpad notation: 563**9**) with less than 5.5 frames between cardinal and second diagonal.
+  * Even with neutral SOCD it's not too hard to get three consecutive SDI inputs without this.
 * Moving from a crouching coordinate to an upward tilt in < 3 frames will move the stick to a tap jump coordinate
   * This prevents users from continuously holding crouch and uptilting on reaction in a single motion.
   * Additionally, it affects the speed of run cancel uptilt.
@@ -63,7 +62,7 @@ Current nerfs (**SUBJECT TO CHANGE**)
   * NOTE: earlier this said 2 frames. I checked the code and it had been 3 frames all along.
 * Tilt stick inputs less than 8.0 frames after an empty pivot will move the stick to a smash coordinate.
   * This detects an empty pivot that is >50% probability of success: a 0.5 to 1.5 frame tap opposite of the last direction pressed.
-  * In each axis, a tilt that is not in the same direction as the last tap (so you can still mody pivot) gets promoted to a full magnitude in that direction, as long as < 8 frames have elapsed since the empty pivot.
+  * In each axis, any upward tilt becomes a tap jump and any downward tilt becomes full magnitude, as long as < 8 frames have elapsed since the empty pivot.
   * This corresponds with the difficulty of controlling the stick after an empty pivot movement.
   * For upward directions, Y is maximized to prevent up-angled ftilt. For downward directions, it attempts to preserve the angle so wavedashes are not randomly affected.
 
