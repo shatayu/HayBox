@@ -284,6 +284,11 @@ uint8_t isTapSDI(const sdizonestate zoneHistory[HISTORYLEN],
         }
     }
 
+    //3 input sdi
+    //center-cardinal-diagonal-diagonal
+    //center-cardinal-diagonal-same cardinal-diagonal
+    //all directions except center must be the same
+    uint8_t cardZone = 0b1111'1111;
     diagZone = 0b1111'1111;
     origCount = 0;
     cardCount = 0;
@@ -292,8 +297,10 @@ uint8_t isTapSDI(const sdizonestate zoneHistory[HISTORYLEN],
         const uint8_t popcnt = popcount_zone(zoneList[i]);
         if(popcnt == 0) {
             origCount++;
+            break;//stop counting once there's an origin
         } else if(popcnt == 1) {
             cardCount++;
+            cardZone = cardZone & zoneList[i];//if there are two different cardinals then it won't count
         } else {
             diagCount++;
             diagZone = diagZone & zoneList[i];//if two of these don't match, it'll have zero or one bits set
@@ -301,7 +308,7 @@ uint8_t isTapSDI(const sdizonestate zoneHistory[HISTORYLEN],
     }
     {//to limit scope of these vars
         //check the bit count of diagonal matching
-        const bool adjacentDiag = popcount_zone(diagZone) == 1;
+        const bool adjacentDiag = popcount_zone(diagZone & cardZone) == 1;
         const bool shortTime = ((timeList[0] - timeList[3])*sampleSpacing < TIMELIMIT_WANK) &&
                                !staleList[3];
         //if it hit two different diagonals
