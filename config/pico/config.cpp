@@ -54,6 +54,38 @@ KeyboardMode *current_kb_mode = nullptr;
 */
 
 /*
+//Home row swap
+#define ALTMAP \
+    {&InputState::l,            5 },\
+    { &InputState::left,        4 },\
+    { &InputState::down,        3 },\
+    { &InputState::right,       2 },\
+\
+    { &InputState::mod_x,       6 },\
+    { &InputState::mod_y,       7 },\
+\
+    { &InputState::select,      10},\
+    { &InputState::start,       0 },\
+    { &InputState::home,        11},\
+\
+    { &InputState::c_left,      13},\
+    { &InputState::c_up,        12},\
+    { &InputState::c_down,      15},\
+    { &InputState::a,           14},\
+    { &InputState::c_right,     16},\
+\
+    { &InputState::b,           27},\
+    { &InputState::x,           22},\
+    { &InputState::z,           20},\
+    { &InputState::up,          18},\
+\
+    { &InputState::r,           26},\
+    { &InputState::y,           21},\
+    { &InputState::lightshield, 19},\
+    { &InputState::midshield,   18},
+*/
+
+/*
 //Group A Chef: r/b swap
 #define ALTMAP \
     {&InputState::l,            5 },\
