@@ -66,19 +66,18 @@ void Melee20Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
         outputs
     );
 
-    bool shield_button_pressed = inputs.l || inputs.r || inputs.lightshield || inputs.midshield;
     if (directions.diagonal) {
         // q1/2 = 7000 7000
         // actually 6875 7125 to account for randomness
-        outputs.leftStickX = 128 + (directions.x * 55);
-        outputs.leftStickY = 128 + (directions.y * 57);
+        outputs.leftStickX = 128 + (directions.x * 56);
+        outputs.leftStickY = 128 + (directions.y * 61);
         // L, R, LS, and MS + q3/4 = 7125 6875 (For vanilla shield drop. Gives 44.5
         // degree wavedash). Also used as default q3/4 diagonal if crouch walk option select is
         // enabled.
         // actually 7250 6750 to account for randomness
-        if (directions.y == -1 && (shield_button_pressed || _options.crouch_walk_os)) {
-            outputs.leftStickX = 128 + (directions.x * 58);
-            outputs.leftStickY = 128 + (directions.y * 54);
+        if (directions.y == -1 && _options.crouch_walk_os) {
+            outputs.leftStickX = 128 + (directions.x * 61);
+            outputs.leftStickY = 128 + (directions.y * 56);
         }
     }
 
@@ -93,16 +92,9 @@ void Melee20Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
         if (directions.vertical) {
             outputs.leftStickY = 128 + (directions.y * 42);
         }
-        /* no more wavedash nerf
-        if (directions.diagonal && shield_button_pressed) {
-            // MX + L, R, LS, and MS + q1/2/3/4 = 6375 3750 = 51 30
-            outputs.leftStickX = 128 + (directions.x * 51);
-            outputs.leftStickY = 128 + (directions.y * 30);
-        }
-        */
 
         /* Up B angles */
-        if (directions.diagonal /*&& !shield_button_pressed*/) {
+        if (directions.diagonal) {
             if (!inputs.b) {
                 // 6750 3125 - 24.84deg - 54 25 - modX
                 // 6750 3625 - 28.24deg - 54 29 - modX + cDown
@@ -178,21 +170,9 @@ void Melee20Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
         if (directions.vertical) {
             outputs.leftStickY = 128 + (directions.y * 59);
         }
-        /* no more wavedash nerf
-        if (directions.diagonal && shield_button_pressed) {
-            // MY + L, R, LS, and MS + q1/2 = 4750 8750 = 38 70
-            outputs.leftStickX = 128 + (directions.x * 38);
-            outputs.leftStickY = 128 + (directions.y * 70);
-            // MY + L, R, LS, and MS + q3/4 = 5000 8500 = 40 68
-            if (directions.y == -1) {
-                outputs.leftStickX = 128 + (directions.x * 40);
-                outputs.leftStickY = 128 + (directions.y * 68);
-            }
-        }
-        */
 
         /* Up B angles */
-        if (directions.diagonal /*&& !shield_button_pressed*/) {
+        if (directions.diagonal) {
             if (!inputs.b) {
                 // 3250 7625 - 23.09deg - 26 61 - modY
                 // 3625 7000 - 27.38deg - 29 56 - modY + cDown
