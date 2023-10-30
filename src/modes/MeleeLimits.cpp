@@ -601,6 +601,7 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
 
     if(timeSinceJump*sampleSpacing < JUMP_TIME && downUpJumping) {
         prelimAY = 255;
+        timeSinceCrouch = 100;//prevent an extra duration jump if the jump ends before the lockout window
     } else {
         downUpJumping = false;
     }
