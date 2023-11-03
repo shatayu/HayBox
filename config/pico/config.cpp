@@ -149,7 +149,6 @@ KeyboardMode *current_kb_mode = nullptr;
     { &InputState::midshield,   18},
 */
 
-/*
 //Group C Potion: B/Z and cu/cd swap for peach
 #define ALTMAP \
     {&InputState::l,            5 },\
@@ -179,7 +178,6 @@ KeyboardMode *current_kb_mode = nullptr;
     { &InputState::y,           22},\
     { &InputState::lightshield, 20},\
     { &InputState::midshield,   18},
-*/
 
 GpioButtonMapping button_mappings[] = {
 #ifndef ALTMAP
