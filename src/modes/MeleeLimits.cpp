@@ -533,12 +533,10 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     bool pivotTilt = false;
     bool upTilt = false;
     if(direction != P_None && prelimAY < ANALOG_DEAD_MIN) {
-        //prelimAY = 0;
         pivotTilt = true;
     }
     //if it's a uptilt coordinate...
     if(direction != P_None && prelimAY > ANALOG_DEAD_MAX) {
-        //prelimAY = 255;
         pivotTilt = true;
         upTilt = true;
     }
@@ -555,28 +553,23 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     }
     */
 
-    //If there's a pivot tilt, preserve the angle as best as possible but maximize the radius
-    int16_t xCoord = max(-127, min(127, prelimAX - ANALOG_STICK_NEUTRAL));//-127 to 127
-    int16_t yCoord = max(-127, min(127, prelimAY - ANALOG_STICK_NEUTRAL));//-127 to 127
-
-    uint16_t maxCoord = max(abs(xCoord), abs(yCoord));
-    bool maxedOut = false;
-    uint8_t stretchMult = 2;
-    for(int i = 2; i < 12; i++) {//23*11/2 is over 127
-        uint16_t tempMax = (maxCoord*i) >> 1;
-        if(tempMax > 127 && !maxedOut) {
-            maxedOut = true;
-            stretchMult = i-1;
-        }
-    }
     if(pivotTilt) {
-        int16_t tempX = (xCoord*stretchMult) >> 1;
-        int16_t tempY = (yCoord*stretchMult) >> 1;
-        if(!upTilt) {//preserve angles for downward ones only
-            prelimAX = ANALOG_STICK_NEUTRAL + tempX;
-            prelimAY = ANALOG_STICK_NEUTRAL + tempY;
-        } else {//prevent pivot up-angled ftilt
-            prelimAY = 255;
+        //If there's a pivot tilt, preserve the angle as best as possible but maximize the radius
+        int8_t xCoord = prelimAX - ANALOG_STICK_NEUTRAL;
+        int8_t yCoord = prelimAY - ANALOG_STICK_NEUTRAL;
+        uint8_t xCoordAbs = abs(xCoord);
+        uint8_t yCoordAbs = abs(yCoord);
+
+        if(upTilt && xCoordAbs > yCoordAbs) {
+            //Force all upward angles to a minimum of 45deg to prevent pivot uftilt and ensure tap jump
+            prelimAX = ANALOG_STICK_NEUTRAL + (xCoord >= 0 ? 127 : -127);
+            prelimAY = ANALOG_STICK_NEUTRAL + 127;
+        } else {
+            //Scale magnitude as close as we can get to 127 in increments of 0.5
+            //Quick way to ensure we get above 80 magnitude with minimal rounding errors
+            uint8_t stretchMult = 127 * 2 / max(xCoordAbs, yCoordAbs);
+            prelimAX = ANALOG_STICK_NEUTRAL + xCoord * stretchMult / 2;
+            prelimAY = ANALOG_STICK_NEUTRAL + yCoord * stretchMult / 2;
         }
     }
 
