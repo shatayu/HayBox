@@ -567,7 +567,7 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
         } else {
             //Scale magnitude as close as we can get to 127 in increments of 0.5
             //Quick way to ensure we get above 80 magnitude with minimal rounding errors
-            uint8_t stretchMult = 127 * 2 / max(xCoordAbs, yCoordAbs);
+            uint8_t stretchMult = (uint8_t)(127 * 2) / max(xCoordAbs, yCoordAbs);
             prelimAX = ANALOG_STICK_NEUTRAL + xCoord * stretchMult / 2;
             prelimAY = ANALOG_STICK_NEUTRAL + yCoord * stretchMult / 2;
         }
