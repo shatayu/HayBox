@@ -62,9 +62,9 @@ Current nerfs (**SUBJECT TO CHANGE**)
   * NOTE: earlier this said 2 frames. I checked the code and it had been 3 frames all along.
 * Tilt stick inputs less than 8.0 frames after an empty pivot will move the stick to a smash coordinate.
   * This detects an empty pivot that is >50% probability of success: a 0.5 to 1.5 frame tap opposite of the last direction pressed.
-  * In each axis, any upward tilt becomes a tap jump and any downward tilt becomes full magnitude, as long as < 8 frames have elapsed since the empty pivot.
+  * Any upward or downward tilt input becomes full magnitude, as long as < 8 frames have elapsed since the empty pivot.
   * This corresponds with the difficulty of controlling the stick after an empty pivot movement.
-  * For upward directions, Y is maximized to prevent up-angled ftilt. For downward directions, it attempts to preserve the angle so wavedashes are not randomly affected.
+  * For upward directions, a minimum angle of 45 degrees is enforced to prevent up-angled ftilt and produce a tap jump regardless of the original angle. Otherwise, it attempts to preserve the angle so wavedashes are not randomly affected.
 
 In addition to nerfs, it offers several features:
 
@@ -158,10 +158,10 @@ After that:
 2. Click File -> **Open Folder** and choose the HayBox folder (the one containing platformio.ini, not the folder above that)
 3. Choose the appropriate build environment for your controller's PCB by
   clicking the environment selection button near the bottom left of the window
-  
+
   ![image](https://user-images.githubusercontent.com/1266473/187039372-485c5f0d-60b3-4534-befb-e713f138a7c8.png)
   ![image](https://user-images.githubusercontent.com/1266473/187039585-cea18994-fd12-45fb-b43f-427eb7affb81.png)
-  
+
 4. If your controller has a different pinout than any of the existing configs, you may edit the button mappings and other pins at the top of the config (`config/<environment>/config.cpp`). Any buttons that your controller doesn't have can simply be deleted from the list.
 5. If you see a message in the bottom bar saying "Rebuilding IntelliSense Index" or "Loading Project Tasks", wait for it to disappear. For Pico especially it may take quite a while the first time because it has to download 2-3GB of dependencies.
 6. Click **Build** (in the bottom left) and make sure everything compiles without
@@ -240,7 +240,7 @@ To install the profile:
   - On Windows: `%appdata%\Slippi Launcher\netplay\User\Config\Profiles\GCPad\` (if this doesn't work, try `...\netplay\Sys\User\...`)
   - On Linux: `~/.config/SlippiOnline/Config/Profiles/GCPad/`
   - On Mac: `Cmd + Shift + G` and enter the path `/Users/<USER>/Library/Application Support/Slippi Launcher/netplay/Slippi Dolphin.app/Contents/Resources/User/Config/Profiles/GCPad`
-- For vanilla Dolphin: 
+- For vanilla Dolphin:
   - On Windows: `%userprofile%\Documents\Dolphin Emulator\Config\Profiles\GCPad\`
   - On Linux: `~/.config/dolphin-emu/Profiles/GCPad/`
 2. Plug in your controller, and configure a "Standard Controller" in Dolphin
