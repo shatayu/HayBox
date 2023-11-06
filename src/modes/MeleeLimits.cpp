@@ -113,17 +113,22 @@ uint8_t isEasy(const uint8_t x, const uint8_t y) {
     }
 }
 
-uint8_t getRandom() {
-    static uint8_t random = 0;
-    random = (random+7) % 16;
-    return random;
+uint8_t getRandom(uint16_t currentTime) {
+    // Use the time of the first directional input to initialize the LCG
+    static uint16_t random = currentTime;
+    // Constant from https://arxiv.org/pdf/2001.05304.pdf
+    random = 0xD9F5 * random + 1;
+    // XOR all nibbles together, necessary to minimize patterns with a power of 2 LCG
+    uint8_t xor1 = random ^ (random >> 8);
+    uint8_t xor2 = xor1   ^ (xor1   >> 4);
+    return xor2 % 16;
 }
 // 1 2 1 //4
 // 2 4 2 //8
 // 1 2 1 //4
 // totals up to 16
-void randomizeCoord(uint8_t &x, uint8_t &y) {
-    const uint8_t random = getRandom();
+void randomizeCoord(uint8_t &x, uint8_t &y, uint16_t currentTime) {
+    const uint8_t random = getRandom(currentTime);
     const uint8_t left = ((random ^ 0b0) & 0b11) == 0;
     //middle is when random & 0b01 or 0b10
     const uint8_t right = ((random ^ 0b11) & 0b11) == 0;
@@ -675,7 +680,7 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
         const uint8_t yIn = rawOutputIn.leftStickY;
         uint8_t xInRand = xIn;
         uint8_t yInRand = yIn;
-        randomizeCoord(xInRand, yInRand);
+        randomizeCoord(xInRand, yInRand, currentTime);
 
         aHistory[currentIndexA].timestamp = currentTime;
         aHistory[currentIndexA].x = xIn;
@@ -719,9 +724,6 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
         }
         */
         aHistory[currentIndexA].tt = prelimTT;
-    } else {
-        //we want to always increment the rng one way or another...
-        getRandom();
     }
 
     //===============================applying the nerfed coords=================================//
