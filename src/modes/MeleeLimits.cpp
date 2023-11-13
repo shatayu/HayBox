@@ -1,4 +1,5 @@
 #include "modes/MeleeLimits.hpp"
+#include "modes/Fixed.h"
 
 #define HISTORYLEN 5//changes in target stick position
 
@@ -46,6 +47,7 @@
 #define TIMELIMIT_PIVOTTILT 32000//(16*8*250)//units of 4us; 8 frames
 
 enum pivotdir{P_None, P_Leftright, P_Rightleft};
+enum travelType{T_Lin, T_Quad, T_Cubic, T_Quart, T_Delay};
 
 #define ZONE_DIR 0b0000'1111
 #define ZONE_U   0b0000'0001
@@ -339,6 +341,21 @@ uint8_t isTapSDI(const sdizonestate zoneHistory[HISTORYLEN],
     return output;
 }
 
+Fixed88 quadraticEasing(Fixed88 i){
+    Fixed88 x2 = fixedMul(i,i);
+    return x2;
+}
+Fixed88 cubicEasing(Fixed88 i){
+    Fixed88 x2 = fixedMul(i,i);
+    Fixed88 x3 = fixedMul(x2,i);
+    return x3;
+}
+Fixed88 quarticEasing(Fixed88 i){
+    Fixed88 x2 = fixedMul(i,i);
+    Fixed88 x4 = fixedMul(x2,x2);
+    return x4;
+}
+
 void travelTimeCalc(const uint16_t samplesElapsed,
                     const uint16_t sampleSpacing,//units of 4us
                     const uint8_t msTravel,
@@ -348,7 +365,7 @@ void travelTimeCalc(const uint16_t samplesElapsed,
                     const uint8_t startY,
                     const uint8_t destX,
                     const uint8_t destY,
-                    const bool delay,
+                    const travelType type,
                     bool &oldChange,//apply tt if false; if the time gets too long, set it to true
                     uint8_t &outX,
                     uint8_t &outY) {
@@ -357,7 +374,7 @@ void travelTimeCalc(const uint16_t samplesElapsed,
         oldChange = true;
     }
     const uint16_t timeElapsed = samplesElapsed*sampleSpacing;//units of 4 us
-    if(!delay) {
+    if(type == T_Lin) {
         const uint16_t travelTimeElapsed = timeElapsed/msTravel;//250 times the fraction of the travel time elapsed
 
         //For the following 256s, they used to be 250, but AVR had division issues
@@ -374,7 +391,7 @@ void travelTimeCalc(const uint16_t samplesElapsed,
 
         outX = (uint8_t) newX;
         outY = (uint8_t) newY;
-    } else {
+    } else if (type == T_Delay) {
         if(timeElapsed <= msTravel*250) {
             outX = startX;
             outY = startY;
@@ -382,6 +399,32 @@ void travelTimeCalc(const uint16_t samplesElapsed,
             outX = destX;
             outY = destY;
         }
+    } else{
+        uint16_t usTravel4 = msTravel*250;//units of 4 us
+        const uint16_t clampedElapsed = min(usTravel4, timeElapsed);
+        if(clampedElapsed == usTravel4) {
+            oldChange = true;
+        }
+        const Fixed88 timeElapsedPercent = fastDiv(intToFixed(int8_t(timeElapsed>>6)), intToFixed(int8_t(usTravel4>>6)));
+
+        Fixed88 interpolatedTime = max(min(timeElapsedPercent, intToFixed(int8_t(1))), intToFixed(int8_t(0)));
+
+        if(type == T_Quad) {
+            interpolatedTime = quadraticEasing(interpolatedTime);
+        } else if(type == T_Cubic) {
+            interpolatedTime = cubicEasing(interpolatedTime);
+        } else /*if(type == T_Quart)*/ {
+            interpolatedTime = quarticEasing(interpolatedTime);
+        }
+        const Fixed88 x0 = intToFixed(int8_t(startX- 128)) >> 1;
+        const Fixed88 x1 = intToFixed(int8_t(destX - 128)) >> 1;
+        const Fixed88 y0 = intToFixed(int8_t(startY- 128)) >> 1;
+        const Fixed88 y1 = intToFixed(int8_t(destY - 128)) >> 1;
+        const Fixed88 fixedX = lerp(x0, x1, interpolatedTime) << 1;
+        const Fixed88 fixedY = lerp(y0, y1, interpolatedTime) << 1;
+
+        outX = uint8_t(fixedToInt(fixedX) + 128);
+        outY = uint8_t(fixedToInt(fixedY) + 128);
     }
 
     if(oldChange || msTravel == 0) {
@@ -444,6 +487,8 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     static uint8_t currentIndexA = 0;
     static uint8_t currentIndexSDI = 0;
 
+    static travelType delayType = T_Cubic;
+
     //calculate travel from the previous step
     uint8_t prelimAX;
     uint8_t prelimAY;
@@ -458,7 +503,7 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
                    aHistory[currentIndexA].y_start,
                    aHistory[currentIndexA].x_end,
                    aHistory[currentIndexA].y_end,
-                   /*useDelay*/false,
+                   delayType,
                    oldA,
                    prelimAX,
                    prelimAY);
@@ -688,16 +733,21 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
         const uint8_t easiness = isEasy(xIn, yIn);
         if(easiness == 1) {
             prelimTT = TRAVELTIME_EASY1;
+            delayType = T_Cubic;
         } else if(easiness == 2) {
             prelimTT = TRAVELTIME_EASY2;
+            delayType = T_Cubic;
         } else if(easiness == 3) {
             prelimTT = TRAVELTIME_EASY3;
+            delayType = T_Cubic;
         } else {
             prelimTT = TRAVELTIME_INTERNAL;
+            delayType = T_Cubic;
         }
         //if cardinal tap SDI
         if(sdi & BITS_SDI_TAP_CARD) {
             prelimTT = max(prelimTT, TRAVELTIME_SLOW);
+            delayType = T_Lin;
         }
         /*
         //if the destination is on the opposite side from the current prelim coord
