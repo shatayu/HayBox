@@ -19,8 +19,8 @@
 #define MELEE_RIM_RAD3 8979/*if x^2+y^2 >= this, it's past the rim and 8ms*/
 
 #define TRAVELTIME_EASY1 6//ms
-#define TRAVELTIME_EASY2 7//ms
-#define TRAVELTIME_EASY3 8//ms
+#define TRAVELTIME_EASY2 6//7//ms
+#define TRAVELTIME_EASY3 6//8//ms for 112+cubic it takes 83% to get to dash, for 80+linear it takes 80% to get to dash
 #define TRAVELTIME_CROSS 12//ms to cross gate; unused
 #define TRAVELTIME_INTERNAL 12//ms for "easy" to "internal"; 2/3 frame
 #define TRAVELTIME_SLOW (4*16)//ms for tap SDI nerfing, 4 frames
