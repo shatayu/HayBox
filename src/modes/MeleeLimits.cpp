@@ -623,6 +623,8 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
         }
     }
 
+    //4 frames of >deadzone -> no tap jump
+
 
     //if it's a crouch to upward coordinate too quickly, make Y jump even if a tilt was desired
     static uint16_t timeSinceCrouch = 100;//must be < 65535 when multiplied by 500, the longest possible sampleSpacing, but bigger than the (timelimit/250)
@@ -712,6 +714,7 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     //if we have a new coordinate, record the new info, the travel time'd locked out stick coordinate, and set travel time
     if(aHistory[currentIndexA].x != rawOutputIn.leftStickX || aHistory[currentIndexA].y != rawOutputIn.leftStickY) {
         oldA = false;
+        const uint8_t oldIndexA = currentIndexA;
         currentIndexA = (currentIndexA + 1) % HISTORYLEN;
 
         const uint8_t xIn = rawOutputIn.leftStickX;
@@ -727,6 +730,25 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
         aHistory[currentIndexA].y_end = yInRand;
         aHistory[currentIndexA].x_start = prelimAX;
         aHistory[currentIndexA].y_start = prelimAY;
+
+        uint8_t oldX = aHistory[oldIndexA].x;
+        uint8_t oldY = aHistory[oldIndexA].y;
+        if(prelimAX == oldX) {
+            if(xInRand > oldX) {
+                aHistory[currentIndexA].x_start++;
+            }
+            if(xInRand < oldX) {
+                aHistory[currentIndexA].x_start--;
+            }
+        }
+        if(prelimAY == oldY) {
+            if(yInRand > oldY) {
+                aHistory[currentIndexA].y_start++;
+            }
+            if(yInRand < oldY) {
+                aHistory[currentIndexA].y_start--;
+            }
+        }
 
         uint8_t prelimTT = TRAVELTIME_EASY1;
         //if the destination is not an "easy" coordinate
