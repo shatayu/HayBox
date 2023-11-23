@@ -140,6 +140,11 @@ void GamecubeBackend::SendReport() {
             */
             detect = true;//stop scanning inputs briefly and re-measure timings
             loopCount = 0;
+            sampleCount = 1;
+            sampleSpacing = 0;
+            oldSampleTime = 0;
+            newSampleTime = 0;
+            loopTime = 0;
         }
         //run the delay procedure based on samplespacing
         //in the stock arduino software, it samples 850 us after the end of the poll response
