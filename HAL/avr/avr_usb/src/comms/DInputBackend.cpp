@@ -75,7 +75,7 @@ void DInputBackend::SendReport() {
     UpdateOutputs();
 
     //if(_nerfOn) {
-    if(true) {
+    if(_gamemode->isMelee()) {
         //APPLY NERFS HERE
         OutputState nerfedOutputs;
         limitOutputs(sampleSpacing, _nerfOn ? AB_A : AB_B, _inputs, _outputs, nerfedOutputs);

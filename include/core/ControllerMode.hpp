@@ -24,6 +24,7 @@ class ControllerMode : public InputMode {
         uint8_t analogStickMax,
         OutputState &outputs
     );
+    virtual bool isMelee() = 0;
 
   protected:
     StickDirections directions;

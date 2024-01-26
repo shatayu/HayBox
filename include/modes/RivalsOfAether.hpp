@@ -8,6 +8,7 @@
 class RivalsOfAether : public ControllerMode {
   public:
     RivalsOfAether(socd::SocdType socd_type);
+    bool isMelee();
 
   private:
     void UpdateDigitalOutputs(InputState &inputs, OutputState &outputs);

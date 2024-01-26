@@ -29,3 +29,5 @@ void DefaultKeyboardMode::UpdateKeys(InputState &inputs) {
     Press(HID_KEY_U, inputs.a);
     Press(HID_KEY_V, inputs.c_down);
 }
+
+bool DefaultKeyboardMode::isMelee() {return false;}

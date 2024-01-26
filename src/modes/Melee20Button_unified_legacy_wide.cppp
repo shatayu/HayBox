@@ -20,6 +20,8 @@ Melee20Button::Melee20Button(socd::SocdType socd_type, Melee20ButtonOptions opti
     _horizontal_socd = false;
 }
 
+bool Melee20Button::isMelee() {return true;}
+
 void Melee20Button::HandleSocd(InputState &inputs) {
     _horizontal_socd = inputs.left && inputs.right;
     InputMode::HandleSocd(inputs);

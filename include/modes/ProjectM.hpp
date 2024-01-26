@@ -13,6 +13,7 @@ typedef struct {
 class ProjectM : public ControllerMode {
   public:
     ProjectM(socd::SocdType socd_type, ProjectMOptions options = {});
+    bool isMelee();
 
   private:
     ProjectMOptions _options;

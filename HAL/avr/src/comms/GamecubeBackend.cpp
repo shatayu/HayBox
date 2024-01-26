@@ -142,8 +142,6 @@ void GamecubeBackend::SendReport() {
             loopCount = 0;
             sampleCount = 1;
             sampleSpacing = 0;
-            oldSampleTime = 0;
-            newSampleTime = 0;
             loopTime = 0;
         }
         //run the delay procedure based on samplespacing
@@ -172,7 +170,7 @@ void GamecubeBackend::SendReport() {
             UpdateOutputs();
 
             //if(_nerfOn) {
-            if(true) {
+            if(_gamemode->isMelee()) {
                 //APPLY NERFS HERE
                 OutputState nerfedOutputs;
                 limitOutputs(sampleSpacing, _nerfOn ? AB_A : AB_B, _inputs, _outputs, nerfedOutputs);

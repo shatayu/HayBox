@@ -14,6 +14,8 @@ FgcMode::FgcMode(socd::SocdType horizontal_socd, socd::SocdType vertical_socd) {
     };
 }
 
+bool FgcMode::isMelee() {return false;}
+
 void FgcMode::UpdateDigitalOutputs(InputState &inputs, OutputState &outputs) {
     // Directions
     outputs.dpadLeft = inputs.left;

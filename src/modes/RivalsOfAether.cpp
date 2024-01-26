@@ -14,6 +14,8 @@ RivalsOfAether::RivalsOfAether(socd::SocdType socd_type) {
     };
 }
 
+bool RivalsOfAether::isMelee() {return false;}
+
 void RivalsOfAether::UpdateDigitalOutputs(InputState &inputs, OutputState &outputs) {
     outputs.a = inputs.a;
     outputs.b = inputs.b;

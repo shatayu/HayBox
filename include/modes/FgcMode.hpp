@@ -8,6 +8,7 @@
 class FgcMode : public ControllerMode {
   public:
     FgcMode(socd::SocdType horizontal_socd, socd::SocdType vertical_socd);
+    bool isMelee();
 
   private:
     void UpdateDigitalOutputs(InputState &inputs, OutputState &outputs);

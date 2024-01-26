@@ -8,6 +8,7 @@
 class DefaultKeyboardMode : public KeyboardMode {
   public:
     DefaultKeyboardMode(socd::SocdType socd_type);
+    bool isMelee();
 
   private:
     void UpdateKeys(InputState &inputs);

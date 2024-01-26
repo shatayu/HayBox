@@ -15,6 +15,8 @@ Ultimate::Ultimate(socd::SocdType socd_type) {
     };
 }
 
+bool Ultimate::isMelee() {return false;}
+
 void Ultimate::UpdateDigitalOutputs(InputState &inputs, OutputState &outputs) {
     outputs.a = inputs.a;
     outputs.b = inputs.b;

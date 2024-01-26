@@ -8,6 +8,7 @@
 class Ultimate : public ControllerMode {
   public:
     Ultimate(socd::SocdType socd_type);
+    bool isMelee();
 
   private:
     void UpdateDigitalOutputs(InputState &inputs, OutputState &outputs);

@@ -127,8 +127,7 @@ void GamecubeBackend::SendReport() {
             // Run gamemode logic.
             UpdateOutputs();
 
-            //if(_nerfOn) {
-            if(true) {
+            if(_gamemode->isMelee()) {
                 //APPLY NERFS HERE
                 OutputState nerfedOutputs;
                 limitOutputs(sampleSpacing/4, _nerfOn ? AB_A : AB_B, _inputs, _outputs, nerfedOutputs);

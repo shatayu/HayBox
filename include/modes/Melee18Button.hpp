@@ -14,6 +14,7 @@ typedef struct {
 class Melee18Button : public ControllerMode {
   public:
     Melee18Button(socd::SocdType socd_type, Melee18ButtonOptions options = {});
+    bool isMelee();
 
   private:
     Melee18ButtonOptions _options;

@@ -17,6 +17,8 @@ ProjectM::ProjectM(socd::SocdType socd_type, ProjectMOptions options) {
     _horizontal_socd = false;
 }
 
+bool ProjectM::isMelee() {return false;}
+
 void ProjectM::HandleSocd(InputState &inputs) {
     _horizontal_socd = inputs.left && inputs.right;
     InputMode::HandleSocd(inputs);

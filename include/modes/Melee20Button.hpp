@@ -14,6 +14,7 @@ typedef struct {
 class Melee20Button : public ControllerMode {
   public:
     Melee20Button(socd::SocdType socd_type, Melee20ButtonOptions options = {});
+    bool isMelee();
 
   protected:
     void UpdateDigitalOutputs(InputState &inputs, OutputState &outputs);
