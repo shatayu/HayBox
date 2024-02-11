@@ -478,6 +478,8 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     static sdizonestate sdiZoneHist[HISTORYLEN];
     static pivotzonestate pivotZoneHist[HISTORYLEN];
 
+    static InputState prevInputs;
+
     static bool initialized = false;
     if(!initialized) {
         for(int i = 0; i<HISTORYLEN; i++) {
@@ -496,12 +498,179 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
             pivotZoneHist[i].zone = 0;
             pivotZoneHist[i].stale = true;
         }
+        //track the inputs that can cause changes to coordinates
+        prevInputs.left = inputs.left;
+        prevInputs.right = inputs.right;
+        prevInputs.down = inputs.down;
+        prevInputs.up = inputs.up;
+        prevInputs.c_left = inputs.c_left;
+        prevInputs.c_right = inputs.c_right;
+        prevInputs.c_down = inputs.c_down;
+        prevInputs.c_up = inputs.c_up;
+        prevInputs.b = inputs.b;
+        prevInputs.l = inputs.l;//we don't care about recording these
+        prevInputs.r = inputs.r;
+        prevInputs.lightshield = inputs.lightshield;
+        prevInputs.midshield = inputs.midshield;
+        prevInputs.mod_x = inputs.mod_x;
+        prevInputs.mod_y = inputs.mod_y;
+
         initialized = true;
     }
     static uint8_t currentIndexA = 0;
     static uint8_t currentIndexSDI = 0;
 
     static travelType delayType = T_Cubic;
+
+    //calculate whether to do a airdodge travel adjustment or not
+    //we want to continue the previous travel time, but if it's an airdodge with a prohibited angle destination, we overwrite the angle.
+    //this way the travel itself never skips straight to the destination.
+
+    //if L or R has been pressed
+    // if the coordinates changed
+    //  if they need to be nerfed
+    //   nerf them
+    //  else
+    //   if L or R caused the coordinate change
+    //    set the travel time destination to the new coordinate
+    // if the coordinates are in a nerf region (but haven't been corrected yet)
+    //  nerf them
+    //if L or R has just been released
+    // if it was nerfing them, un-nerf them
+    bool wavedashSkip = false;
+    static bool wavedashWasNerfed = false;
+    if(inputs.l || inputs.r) {
+        //check angles to see if it's in a shallow wavedash region
+        //the trigger was the only input that changed, potentially causing a retargeting without restarting the travel time
+        const uint8_t xIn = rawOutputIn.leftStickX;
+        const uint8_t yIn = rawOutputIn.leftStickY;
+        uint8_t x_end = xIn;
+        uint8_t y_end = yIn;
+
+        //calculate magnitudes
+        const uint16_t xInMag = xIn > ANALOG_STICK_NEUTRAL ? xIn - ANALOG_STICK_NEUTRAL : ANALOG_STICK_NEUTRAL - xIn;
+        const uint16_t yInMag = yIn > ANALOG_STICK_NEUTRAL ? yIn - ANALOG_STICK_NEUTRAL : ANALOG_STICK_NEUTRAL - yIn;
+
+        //if the coordinates changed
+        if(aHistory[currentIndexA].x != rawOutputIn.leftStickX || aHistory[currentIndexA].y != rawOutputIn.leftStickY) {
+            //if the angle moved, check whether the currently requested angle is too shallow
+            //if so, nerf it, regardless of whether it was nerfed before.
+            if(((yInMag * 157 < xInMag * 80) || (xInMag * 157 < yInMag * 80)) && xInMag && yInMag) { //157 and 80 are the closest ratio to 27 degrees (27.0013)
+                //the closest coordinate inside the melee unit circle to 27 degrees is 51 and 26 (27.0127)
+                const uint8_t xWavedash = xInMag > yInMag ? 51 : 26;
+                const uint8_t yWavedash = yInMag > xInMag ? 51 : 26;
+                //overwrite with a nerfed angle
+                if(xIn < ANALOG_STICK_NEUTRAL) {
+                    x_end = ANALOG_STICK_NEUTRAL - xWavedash;
+                } else {
+                    x_end = ANALOG_STICK_NEUTRAL + xWavedash;
+                }
+                if(yIn < ANALOG_STICK_NEUTRAL) {
+                    y_end = ANALOG_STICK_NEUTRAL - yWavedash;
+                } else {
+                    y_end = ANALOG_STICK_NEUTRAL + yWavedash;
+                }
+                //fuzz it
+                randomizeCoord(x_end, y_end, currentTime);
+                //write it back
+                aHistory[currentIndexA].x_end = x_end;
+                aHistory[currentIndexA].y_end = y_end;
+                //also record the new requested coordinates
+                aHistory[currentIndexA].x = rawOutputIn.leftStickX;
+                aHistory[currentIndexA].y = rawOutputIn.leftStickY;
+                //mark as having been nerfed so we can undo it later
+                wavedashWasNerfed = true;
+            } else {
+                wavedashWasNerfed = false;
+                //only skip inputs if the L or R press caused the change in coordinates
+                if(!(prevInputs.l || prevInputs.r)) {
+                    //check if the L/R press coincides with a change in coordinate, indicating L/R NDM
+                    if(
+                        prevInputs.left == inputs.left &&
+                        prevInputs.right == inputs.right &&
+                        prevInputs.down == inputs.down &&
+                        prevInputs.up == inputs.up &&
+                        prevInputs.c_left == inputs.c_left &&
+                        prevInputs.c_right == inputs.c_right &&
+                        prevInputs.c_down == inputs.c_down &&
+                        prevInputs.c_up == inputs.c_up &&
+                        prevInputs.b == inputs.b &&
+                        prevInputs.lightshield == inputs.lightshield &&
+                        prevInputs.midshield == inputs.midshield &&
+                        prevInputs.mod_x == inputs.mod_x &&
+                        prevInputs.mod_y == inputs.mod_y
+                    ) {
+                        //then we need to skip to the new coordinate
+                        //fuzz it
+                        randomizeCoord(x_end, y_end, currentTime);
+                        //write it back
+                        aHistory[currentIndexA].x_end = x_end;
+                        aHistory[currentIndexA].y_end = y_end;
+                        //also record the new requested coordinates
+                        aHistory[currentIndexA].x = rawOutputIn.leftStickX;
+                        aHistory[currentIndexA].y = rawOutputIn.leftStickY;
+                        //mark this change as having been skipped so we don't restart travel time later
+                        wavedashSkip = true;
+                    }
+                }
+            }
+        }
+        //even if pressing L or R didn't move the coordinate, but it is now illegal
+        //nerf it
+        if(((yInMag * 157 < xInMag * 80) || (xInMag * 157 < yInMag * 80)) && xInMag && yInMag && !wavedashWasNerfed) { //157 and 80 are the closest ratio to 27 degrees (27.0013)
+            //the closest coordinate inside the melee unit circle to 27 degrees is 51 and 26 (27.0127)
+            const uint8_t xWavedash = xInMag > yInMag ? 51 : 26;
+            const uint8_t yWavedash = yInMag > xInMag ? 51 : 26;
+            //overwrite with a nerfed angle
+            if(xIn < ANALOG_STICK_NEUTRAL) {
+                x_end = ANALOG_STICK_NEUTRAL - xWavedash;
+            } else {
+                x_end = ANALOG_STICK_NEUTRAL + xWavedash;
+            }
+            if(yIn < ANALOG_STICK_NEUTRAL) {
+                y_end = ANALOG_STICK_NEUTRAL - yWavedash;
+            } else {
+                y_end = ANALOG_STICK_NEUTRAL + yWavedash;
+            }
+            //fuzz it
+            randomizeCoord(x_end, y_end, currentTime);
+            //write it back
+            aHistory[currentIndexA].x_end = x_end;
+            aHistory[currentIndexA].y_end = y_end;
+            //mark as having been nerfed so we can undo it later
+            wavedashWasNerfed = true;
+        }
+    } else if(!(inputs.l || inputs.r) && (prevInputs.l || prevInputs.r)) {
+        //if nerfed, then de-nerf once L and R are no longer pressed
+        if(wavedashWasNerfed) {
+            const uint8_t xIn = rawOutputIn.leftStickX;
+            const uint8_t yIn = rawOutputIn.leftStickY;
+            uint8_t x_end = xIn;
+            uint8_t y_end = yIn;
+            //fuzz it again
+            randomizeCoord(x_end, y_end, currentTime);
+            //write it back
+            aHistory[currentIndexA].x_end = x_end;
+            aHistory[currentIndexA].y_end = y_end;
+            wavedashWasNerfed = false;
+        }
+    }
+    //record previous inputs
+    prevInputs.left = inputs.left;
+    prevInputs.right = inputs.right;
+    prevInputs.down = inputs.down;
+    prevInputs.up = inputs.up;
+    prevInputs.c_left = inputs.c_left;
+    prevInputs.c_right = inputs.c_right;
+    prevInputs.c_down = inputs.c_down;
+    prevInputs.c_up = inputs.c_up;
+    prevInputs.b = inputs.b;
+    prevInputs.l = inputs.l;
+    prevInputs.r = inputs.r;
+    prevInputs.lightshield = inputs.lightshield;
+    prevInputs.midshield = inputs.midshield;
+    prevInputs.mod_x = inputs.mod_x;
+    prevInputs.mod_y = inputs.mod_y;
 
     //calculate travel from the previous step
     uint8_t prelimAX;
@@ -522,17 +691,6 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
                    doneTraveling,
                    prelimAX,
                    prelimAY);
-
-    //If we're doing a diagonal airdodge, make travel time instant to prevent inconsistent wavedash angles
-    //this only fully works for neutral socd right now
-    //this is a catchall to force the latest output
-    //however, we do want to make it be overridden by the sdi nerfs so this happens first
-    /*
-    if((inputs.left != inputs.right) && (inputs.down != inputs.up) && inputs.down && (inputs.r || inputs.l)) {
-        prelimAX = rawOutputIn.leftStickX;
-        prelimAY = rawOutputIn.leftStickY;
-    }
-    */
 
     //detect an input that gives >50% pivot probability given travel time
     //if we are in a new pivot zone, record the new zone
@@ -732,83 +890,70 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
 
     //if we have a new coordinate, record the new info, the travel time'd locked out stick coordinate, and set travel time
     if(aHistory[currentIndexA].x != rawOutputIn.leftStickX || aHistory[currentIndexA].y != rawOutputIn.leftStickY) {
-        oldA = false;
-        doneTraveling = false;
-        const uint8_t oldIndexA = currentIndexA;
-        currentIndexA = (currentIndexA + 1) % HISTORYLEN;
+        //don't update things if this is a wavedash in a banned region
+        if(!wavedashSkip) {
+            oldA = false;
+            doneTraveling = false;
+            const uint8_t oldIndexA = currentIndexA;
+            currentIndexA = (currentIndexA + 1) % HISTORYLEN;
 
-        const uint8_t xIn = rawOutputIn.leftStickX;
-        const uint8_t yIn = rawOutputIn.leftStickY;
-        uint8_t xInRand = xIn;
-        uint8_t yInRand = yIn;
-        randomizeCoord(xInRand, yInRand, currentTime);
+            const uint8_t xIn = rawOutputIn.leftStickX;
+            const uint8_t yIn = rawOutputIn.leftStickY;
 
-        aHistory[currentIndexA].timestamp = currentTime;
-        aHistory[currentIndexA].x = xIn;
-        aHistory[currentIndexA].y = yIn;
-        aHistory[currentIndexA].x_end = xInRand;
-        aHistory[currentIndexA].y_end = yInRand;
-        aHistory[currentIndexA].x_start = prelimAX;
-        aHistory[currentIndexA].y_start = prelimAY;
+            uint8_t xInRand = xIn;
+            uint8_t yInRand = yIn;
+            randomizeCoord(xInRand, yInRand, currentTime);
 
-        uint8_t oldX = aHistory[oldIndexA].x;
-        uint8_t oldY = aHistory[oldIndexA].y;
-        if(prelimAX == oldX) {
-            if(xInRand > oldX) {
-                aHistory[currentIndexA].x_start++;
-            }
-            if(xInRand < oldX) {
-                aHistory[currentIndexA].x_start--;
-            }
-        }
-        if(prelimAY == oldY) {
-            if(yInRand > oldY) {
-                aHistory[currentIndexA].y_start++;
-            }
-            if(yInRand < oldY) {
-                aHistory[currentIndexA].y_start--;
-            }
-        }
+            aHistory[currentIndexA].timestamp = currentTime;
+            aHistory[currentIndexA].x = xIn;
+            aHistory[currentIndexA].y = yIn;
+            aHistory[currentIndexA].x_end = xInRand;
+            aHistory[currentIndexA].y_end = yInRand;
+            aHistory[currentIndexA].x_start = prelimAX;
+            aHistory[currentIndexA].y_start = prelimAY;
 
-        uint8_t prelimTT = TRAVELTIME_EASY1;
-        //if the destination is not an "easy" coordinate
-        const uint8_t easiness = isEasy(xIn, yIn);
-        if(easiness == 1) {
-            prelimTT = TRAVELTIME_EASY1;
-            delayType = T_Cubic;
-        } else if(easiness == 2) {
-            prelimTT = TRAVELTIME_EASY2;
-            delayType = T_Cubic;
-        } else if(easiness == 3) {
-            prelimTT = TRAVELTIME_EASY3;
-            delayType = T_Cubic;
-        } else {
-            prelimTT = TRAVELTIME_INTERNAL;
-            delayType = T_Cubic;
+            uint8_t oldX = aHistory[oldIndexA].x;
+            uint8_t oldY = aHistory[oldIndexA].y;
+            if(prelimAX == oldX) {
+                if(xInRand > oldX) {
+                    aHistory[currentIndexA].x_start++;
+                }
+                if(xInRand < oldX) {
+                    aHistory[currentIndexA].x_start--;
+                }
+            }
+            if(prelimAY == oldY) {
+                if(yInRand > oldY) {
+                    aHistory[currentIndexA].y_start++;
+                }
+                if(yInRand < oldY) {
+                    aHistory[currentIndexA].y_start--;
+                }
+            }
+
+            uint8_t prelimTT = TRAVELTIME_EASY1;
+            //if the destination is not an "easy" coordinate
+            const uint8_t easiness = isEasy(xIn, yIn);
+            if(easiness == 1) {
+                prelimTT = TRAVELTIME_EASY1;
+                delayType = T_Cubic;
+            } else if(easiness == 2) {
+                prelimTT = TRAVELTIME_EASY2;
+                delayType = T_Cubic;
+            } else if(easiness == 3) {
+                prelimTT = TRAVELTIME_EASY3;
+                delayType = T_Cubic;
+            } else {
+                prelimTT = TRAVELTIME_INTERNAL;
+                delayType = T_Cubic;
+            }
+            //if cardinal tap SDI
+            if(sdi & BITS_SDI_TAP_CARD) {
+                prelimTT = max(prelimTT, TRAVELTIME_SLOW);
+                delayType = T_Lin;
+            }
+            aHistory[currentIndexA].tt = prelimTT;
         }
-        //if cardinal tap SDI
-        if(sdi & BITS_SDI_TAP_CARD) {
-            prelimTT = max(prelimTT, TRAVELTIME_SLOW);
-            delayType = T_Lin;
-        }
-        /*
-        //if the destination is on the opposite side from the current prelim coord
-        if((xIn < ANALOG_STICK_NEUTRAL && ANALOG_STICK_NEUTRAL < prelimAX) ||
-           (yIn < ANALOG_STICK_NEUTRAL && ANALOG_STICK_NEUTRAL < prelimAY) ||
-           (xIn > ANALOG_STICK_NEUTRAL && ANALOG_STICK_NEUTRAL > prelimAX) ||
-           (yIn > ANALOG_STICK_NEUTRAL && ANALOG_STICK_NEUTRAL > prelimAY)) {
-            prelimTT = max(prelimTT, TRAVELTIME_CROSS);
-        }
-        */
-        //If we're doing a diagonal airdodge, make travel time instant to prevent inconsistent wavedash angles
-        //this only fully works for neutral socd right now
-        //it doesn't fully work either, so I'm going to put a catchall in the outer loop
-        /*
-        if((inputs.left != inputs.right) && (inputs.down != inputs.up) && inputs.down && (inputs.r || inputs.l)) {
-            prelimTT = 0;
-        }
-        */
-        aHistory[currentIndexA].tt = prelimTT;
     }
 
     //===============================applying the nerfed coords=================================//
