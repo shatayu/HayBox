@@ -32,8 +32,6 @@ jobs:
               bin_ext: hex
             - env: b0xx_r1
               bin_ext: hex
-            - env: b0xx_r1_old
-              bin_ext: hex
             - env: b0xx_r2
               bin_ext: hex
             - env: gccmx
