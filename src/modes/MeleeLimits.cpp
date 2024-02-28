@@ -351,20 +351,24 @@ uint8_t isTapSDI(const sdizonestate zoneHistory[HISTORYLEN],
     return output;
 }
 
+/*
 Fixed88 quadraticEasing(Fixed88 i){
     Fixed88 x2 = fixedMul(i,i);
     return x2;
 }
+*/
 Fixed88 cubicEasing(Fixed88 i){
     Fixed88 x2 = fixedMul(i,i);
     Fixed88 x3 = fixedMul(x2,i);
     return x3;
 }
+/*
 Fixed88 quarticEasing(Fixed88 i){
     Fixed88 x2 = fixedMul(i,i);
     Fixed88 x4 = fixedMul(x2,x2);
     return x4;
 }
+*/
 
 void travelTimeCalc(const uint16_t samplesElapsed,
                     const uint16_t sampleSpacing,//units of 4us
@@ -422,13 +426,16 @@ void travelTimeCalc(const uint16_t samplesElapsed,
 
         Fixed88 interpolatedTime = max(min(timeElapsedPercent, intToFixed(int8_t(1))), intToFixed(int8_t(0)));
 
-        if(type == T_Quad) {
+        /*if(type == T_Quad) {
             interpolatedTime = quadraticEasing(interpolatedTime);
         } else if(type == T_Cubic) {
+            */
             interpolatedTime = cubicEasing(interpolatedTime);
-        } else /*if(type == T_Quart)*/ {
+            /*
+        } else {//if(type == T_Quart)
             interpolatedTime = quarticEasing(interpolatedTime);
         }
+        */
         const Fixed88 x0 = intToFixed(int8_t(startX- 128)) >> 1;
         const Fixed88 x1 = intToFixed(int8_t(destX - 128)) >> 1;
         const Fixed88 y0 = intToFixed(int8_t(startY- 128)) >> 1;
