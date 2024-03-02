@@ -1,6 +1,6 @@
 #include "modes/Melee20Button.hpp"
 
-//legacy modx wavedash angle with wider modx
+//unified angles
 
 #define ANALOG_STICK_MIN 48
 #define ANALOG_STICK_NEUTRAL 128
@@ -68,7 +68,6 @@ void Melee20Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
         outputs
     );
 
-    bool shield_button_pressed = inputs.l || inputs.r || inputs.lightshield || inputs.midshield;
     if (directions.diagonal) {
         // q1/2 = 7000 7000
         // actually 6875 7125 to account for randomness
@@ -95,18 +94,12 @@ void Melee20Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
         if (directions.vertical) {
             outputs.leftStickY = 128 + (directions.y * 42);
         }
-        if (directions.diagonal && shield_button_pressed) {
-            // MX + L, R, LS, and MS + q1/2/3/4:
-            // 6625 4125 - 31.91deg - 53 33
-            outputs.leftStickX = 128 + (directions.x * 51);
-            outputs.leftStickY = 128 + (directions.y * 30);
-        }
 
         /* Up B angles */
-        if (directions.diagonal && !shield_button_pressed) {
+        if (directions.diagonal) {
             if (!inputs.b) {
-                // 7375 3125 - 22.96deg - 59 25 - modX
-                // 7000 3625 - 27.38deg - 56 29 - modX + cDown
+                // 6750 3125 - 24.84deg - 59 25 - modX
+                // 6750 3625 - 28.24deg - 56 29 - modX + cDown
                 // 6625 4125 - 31.91deg - 53 33 - modX + cLeft
                 // 6375 4625 - 35.96deg - 51 37 - modX + cUp
                 // 6125 5125 - 39.92deg - 49 41 - modX + cRight
@@ -130,16 +123,16 @@ void Melee20Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
                 }
             } else {
                 /* Extended Up B Angles */
-                // 9125 3875 - 23.09deg - 73 31 - modX + B
-                // 8750 4500 - 27.22deg - 70 36 - modX + B + cDown
+                // 9000 4125 - 24.62deg - 72 33 - modX + B
+                // 8750 4750 - 28.50deg - 70 38 - modX + B + cDown
                 // 8500 5250 - 31.70deg - 68 42 - modX + B + cLeft
                 // 7250 5250 - 35.91deg - 58 42 - modX + B + cUp
                 // 6375 5250 - 39.47deg - 51 42 - modX + B + cRight
-                outputs.leftStickX = 128 + (directions.x * 73);
-                outputs.leftStickY = 128 + (directions.y * 31);
+                outputs.leftStickX = 128 + (directions.x * 72);
+                outputs.leftStickY = 128 + (directions.y * 33);
                 if (inputs.c_down) {
                     outputs.leftStickX = 128 + (directions.x * 70);
-                    outputs.leftStickY = 128 + (directions.y * 36);
+                    outputs.leftStickY = 128 + (directions.y * 38);
                 }
                 if (inputs.c_left) {
                     outputs.leftStickX = 128 + (directions.x * 68);
@@ -177,19 +170,9 @@ void Melee20Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
         if (directions.vertical) {
             outputs.leftStickY = 128 + (directions.y * 59);
         }
-        if (directions.diagonal && shield_button_pressed) {
-            // MY + L, R, LS, and MS + q1/2 = 4750 8750 = 38 70
-            outputs.leftStickX = 128 + (directions.x * 38);
-            outputs.leftStickY = 128 + (directions.y * 70);
-            // MY + L, R, LS, and MS + q3/4 = 5000 8500 = 40 68
-            if (directions.y == -1) {
-                outputs.leftStickX = 128 + (directions.x * 40);
-                outputs.leftStickY = 128 + (directions.y * 68);
-            }
-        }
 
         /* Up B angles */
-        if (directions.diagonal && !shield_button_pressed) {
+        if (directions.diagonal) {
             if (!inputs.b) {
                 // 3250 7625 - 23.09deg - 26 61 - modY
                 // 3625 7000 - 27.38deg - 29 56 - modY + cDown
