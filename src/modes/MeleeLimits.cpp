@@ -351,18 +351,16 @@ uint8_t isTapSDI(const sdizonestate zoneHistory[HISTORYLEN],
     return output;
 }
 
-/*
 Fixed88 quadraticEasing(Fixed88 i){
     Fixed88 x2 = fixedMul(i,i);
     return x2;
 }
-*/
+/*
 Fixed88 cubicEasing(Fixed88 i){
     Fixed88 x2 = fixedMul(i,i);
     Fixed88 x3 = fixedMul(x2,i);
     return x3;
 }
-/*
 Fixed88 quarticEasing(Fixed88 i){
     Fixed88 x2 = fixedMul(i,i);
     Fixed88 x4 = fixedMul(x2,x2);
@@ -427,11 +425,11 @@ void travelTimeCalc(const uint16_t samplesElapsed,
         Fixed88 interpolatedTime = max(min(timeElapsedPercent, intToFixed(int8_t(1))), intToFixed(int8_t(0)));
 
         /*if(type == T_Quad) {
+         * */
             interpolatedTime = quadraticEasing(interpolatedTime);
-        } else if(type == T_Cubic) {
-            */
-            interpolatedTime = cubicEasing(interpolatedTime);
             /*
+        } else if(type == T_Cubic) {
+            interpolatedTime = cubicEasing(interpolatedTime);
         } else {//if(type == T_Quart)
             interpolatedTime = quarticEasing(interpolatedTime);
         }
@@ -943,16 +941,16 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
             const uint8_t easiness = isEasy(xIn, yIn);
             if(easiness == 1) {
                 prelimTT = TRAVELTIME_EASY1;
-                delayType = T_Cubic;
+                delayType = T_Quad;
             } else if(easiness == 2) {
                 prelimTT = TRAVELTIME_EASY2;
-                delayType = T_Cubic;
+                delayType = T_Quad;
             } else if(easiness == 3) {
                 prelimTT = TRAVELTIME_EASY3;
-                delayType = T_Cubic;
+                delayType = T_Quad;
             } else {
                 prelimTT = TRAVELTIME_INTERNAL;
-                delayType = T_Cubic;
+                delayType = T_Quad;
             }
             //if cardinal tap SDI
             if(sdi & BITS_SDI_TAP_CARD) {

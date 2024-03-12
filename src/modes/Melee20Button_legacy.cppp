@@ -1,6 +1,6 @@
 #include "modes/Melee20Button.hpp"
 
-//legacy modx wavedash angle with wider modx
+//legacy modx wavedash angle
 
 #define ANALOG_STICK_MIN 48
 #define ANALOG_STICK_NEUTRAL 128
@@ -97,7 +97,7 @@ void Melee20Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
         }
         if (directions.diagonal && shield_button_pressed) {
             // MX + L, R, LS, and MS + q1/2/3/4:
-            // 6625 4125 - 31.91deg - 53 33
+            // 6375 3750 - 30.47 deg - 51 30
             outputs.leftStickX = 128 + (directions.x * 51);
             outputs.leftStickY = 128 + (directions.y * 30);
         }
