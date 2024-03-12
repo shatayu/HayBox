@@ -1,6 +1,6 @@
 #include "modes/Melee20Button.hpp"
 
-//unified angles
+//wider wavedash angle
 
 #define ANALOG_STICK_MIN 48
 #define ANALOG_STICK_NEUTRAL 128
