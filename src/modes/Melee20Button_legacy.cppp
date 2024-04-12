@@ -105,12 +105,12 @@ void Melee20Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
         /* Up B angles */
         if (directions.diagonal && !shield_button_pressed) {
             if (!inputs.b) {
-                // 7375 3125 - 22.96deg - 59 25 - modX
+                // 7250 3125 - 23.32deg - 58 25 - modX
                 // 7000 3625 - 27.38deg - 56 29 - modX + cDown
                 // 6625 4125 - 31.91deg - 53 33 - modX + cLeft
                 // 6375 4625 - 35.96deg - 51 37 - modX + cUp
                 // 6125 5125 - 39.92deg - 49 41 - modX + cRight
-                outputs.leftStickX = 128 + (directions.x * 59);
+                outputs.leftStickX = 128 + (directions.x * 58);
                 outputs.leftStickY = 128 + (directions.y * 25);
                 if (inputs.c_down) {
                     outputs.leftStickX = 128 + (directions.x * 56);
