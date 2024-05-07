@@ -1,5 +1,5 @@
 #include "modes/MeleeLimits.hpp"
-#include "modes/Fixed.h"
+//#include "modes/Fixed.h"
 
 #define HISTORYLEN 5//changes in target stick position
 
@@ -19,8 +19,8 @@
 #define MELEE_RIM_RAD3 8979/*if x^2+y^2 >= this, it's past the rim and 8ms*/
 
 #define TRAVELTIME_EASY1 6//ms
-#define TRAVELTIME_EASY2 6//7//ms
-#define TRAVELTIME_EASY3 6//8//ms for 112+cubic it takes 83% to get to dash, for 80+linear it takes 80% to get to dash
+#define TRAVELTIME_EASY2 7//ms
+#define TRAVELTIME_EASY3 8//ms for 112+cubic it takes 83% to get to dash, for 80+linear it takes 80% to get to dash
 #define TRAVELTIME_CROSS 12//ms to cross gate; unused
 #define TRAVELTIME_INTERNAL 12//ms for "easy" to "internal"; 2/3 frame
 #define TRAVELTIME_SLOW (4*16)//ms for tap SDI nerfing, 4 frames
@@ -351,11 +351,11 @@ uint8_t isTapSDI(const sdizonestate zoneHistory[HISTORYLEN],
     return output;
 }
 
+/*
 Fixed88 quadraticEasing(Fixed88 i){
     Fixed88 x2 = fixedMul(i,i);
     return x2;
 }
-/*
 Fixed88 cubicEasing(Fixed88 i){
     Fixed88 x2 = fixedMul(i,i);
     Fixed88 x3 = fixedMul(x2,i);
@@ -414,35 +414,35 @@ void travelTimeCalc(const uint16_t samplesElapsed,
             outY = destY;
             doneTraveling = true;
         }
-    } else{
-        uint16_t usTravel4 = msTravel*250;//units of 4 us
-        const uint16_t clampedElapsed = min(usTravel4, timeElapsed);
-        if(clampedElapsed == usTravel4) {
-            doneTraveling = true;
-        }
-        const Fixed88 timeElapsedPercent = fastDiv(intToFixed(int8_t(timeElapsed>>6)), intToFixed(int8_t(usTravel4>>6)));
-
-        Fixed88 interpolatedTime = max(min(timeElapsedPercent, intToFixed(int8_t(1))), intToFixed(int8_t(0)));
-
-        /*if(type == T_Quad) {
-         * */
-            interpolatedTime = quadraticEasing(interpolatedTime);
-            /*
-        } else if(type == T_Cubic) {
-            interpolatedTime = cubicEasing(interpolatedTime);
-        } else {//if(type == T_Quart)
-            interpolatedTime = quarticEasing(interpolatedTime);
-        }
-        */
-        const Fixed88 x0 = intToFixed(int8_t(startX- 128)) >> 1;
-        const Fixed88 x1 = intToFixed(int8_t(destX - 128)) >> 1;
-        const Fixed88 y0 = intToFixed(int8_t(startY- 128)) >> 1;
-        const Fixed88 y1 = intToFixed(int8_t(destY - 128)) >> 1;
-        const Fixed88 fixedX = lerp(x0, x1, interpolatedTime) << 1;
-        const Fixed88 fixedY = lerp(y0, y1, interpolatedTime) << 1;
-
-        outX = uint8_t(fixedToInt(fixedX) + 128);
-        outY = uint8_t(fixedToInt(fixedY) + 128);
+//    } else{
+//        uint16_t usTravel4 = msTravel*250;//units of 4 us
+//        const uint16_t clampedElapsed = min(usTravel4, timeElapsed);
+//        if(clampedElapsed == usTravel4) {
+//            doneTraveling = true;
+//        }
+//        const Fixed88 timeElapsedPercent = fastDiv(intToFixed(int8_t(timeElapsed>>6)), intToFixed(int8_t(usTravel4>>6)));
+//
+//        Fixed88 interpolatedTime = max(min(timeElapsedPercent, intToFixed(int8_t(1))), intToFixed(int8_t(0)));
+//
+//        /*if(type == T_Quad) {
+//         * */
+//            interpolatedTime = quadraticEasing(interpolatedTime);
+//            /*
+//        } else if(type == T_Cubic) {
+//            interpolatedTime = cubicEasing(interpolatedTime);
+//        } else {//if(type == T_Quart)
+//            interpolatedTime = quarticEasing(interpolatedTime);
+//        }
+//        */
+//        const Fixed88 x0 = intToFixed(int8_t(startX- 128)) >> 1;
+//        const Fixed88 x1 = intToFixed(int8_t(destX - 128)) >> 1;
+//        const Fixed88 y0 = intToFixed(int8_t(startY- 128)) >> 1;
+//        const Fixed88 y1 = intToFixed(int8_t(destY - 128)) >> 1;
+//        const Fixed88 fixedX = lerp(x0, x1, interpolatedTime) << 1;
+//        const Fixed88 fixedY = lerp(y0, y1, interpolatedTime) << 1;
+//
+//        outX = uint8_t(fixedToInt(fixedX) + 128);
+//        outY = uint8_t(fixedToInt(fixedY) + 128);
     }
 
     if(oldChange || doneTraveling || msTravel == 0) {
@@ -525,7 +525,7 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     static uint8_t currentIndexA = 0;
     static uint8_t currentIndexSDI = 0;
 
-    static travelType delayType = T_Cubic;
+    static travelType delayType = T_Lin;
 
     //calculate whether to do a airdodge travel adjustment or not
     //we want to continue the previous travel time, but if it's an airdodge with a prohibited angle destination, we overwrite the angle.
@@ -941,16 +941,16 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
             const uint8_t easiness = isEasy(xIn, yIn);
             if(easiness == 1) {
                 prelimTT = TRAVELTIME_EASY1;
-                delayType = T_Quad;
+                delayType = T_Lin;
             } else if(easiness == 2) {
                 prelimTT = TRAVELTIME_EASY2;
-                delayType = T_Quad;
+                delayType = T_Lin;
             } else if(easiness == 3) {
                 prelimTT = TRAVELTIME_EASY3;
-                delayType = T_Quad;
+                delayType = T_Lin;
             } else {
                 prelimTT = TRAVELTIME_INTERNAL;
-                delayType = T_Quad;
+                delayType = T_Lin;
             }
             //if cardinal tap SDI
             if(sdi & BITS_SDI_TAP_CARD) {
