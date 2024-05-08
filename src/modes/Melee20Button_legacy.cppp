@@ -130,7 +130,7 @@ void Melee20Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
                 }
             } else {
                 /* Extended Up B Angles */
-                // 9125 3875 - 23.09deg - 73 31 - modX + B
+                // 9125 3875 - 23.01deg - 73 31 - modX + B
                 // 8750 4500 - 27.22deg - 70 36 - modX + B + cDown
                 // 8500 5250 - 31.70deg - 68 42 - modX + B + cLeft
                 // 7250 5250 - 35.91deg - 58 42 - modX + B + cUp
