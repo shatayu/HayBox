@@ -14,6 +14,7 @@
 #define ANALOG_DASH_RIGHT (128+64)/*this x coordinate will dash right*/
 #define ANALOG_SDI_LEFT (128-56)/*this x coordinate will sdi left*/
 #define ANALOG_SDI_RIGHT (128+56)/*this x coordinate will sdi right*/
+#define MELEE_SDI_RAD 3136/* if x^2+y^2 >= this, it's diagonal SDI
 #define MELEE_RIM_RAD1 6185/*if x^2+y^2 >= this, it's on the rim and 6ms*/
 #define MELEE_RIM_RAD2 6858/*if x^2+y^2 >= this, it's past the rim and 7ms*/
 #define MELEE_RIM_RAD3 8979/*if x^2+y^2 >= this, it's past the rim and 8ms*/
@@ -163,6 +164,11 @@ uint8_t lookback(const uint8_t currentIndex,
 //thresholds are dash for cardinals, and deadzone for diagonals
 uint8_t sdiZone(const uint8_t x, const uint8_t y) {
     uint8_t result = 0b0000'0000;
+    const uint8_t xnorm = (x > ANALOG_STICK_NEUTRAL ? (x-ANALOG_STICK_NEUTRAL) : (ANALOG_STICK_NEUTRAL-x));
+    const uint8_t ynorm = (y > ANALOG_STICK_NEUTRAL ? (y-ANALOG_STICK_NEUTRAL) : (ANALOG_STICK_NEUTRAL-y));
+    const uint16_t xsquared = xnorm*xnorm;
+    const uint16_t ysquared = ynorm*ynorm;
+    const uint16_t radSquared = xsquared+ysquared;
     if(x >= ANALOG_DEAD_MIN && x <= ANALOG_DEAD_MAX) {
         if(y < ANALOG_SDI_LEFT) {
             result = result | ZONE_D;
@@ -170,17 +176,17 @@ uint8_t sdiZone(const uint8_t x, const uint8_t y) {
             result = result | ZONE_U;
         }
     } else if(x < ANALOG_DEAD_MIN) {
-        if(y < ANALOG_DEAD_MIN) {
+        if(y < ANALOG_DEAD_MIN && radSquared >= MELEE_RAD_SDI) {
             result = result | ZONE_D | ZONE_L;
-        } else if(y > ANALOG_DEAD_MAX) {
+        } else if(y > ANALOG_DEAD_MAX && radSquared >= MELEE_RAD_SDI) {
             result = result | ZONE_U | ZONE_L;
         } else if(x <= ANALOG_SDI_LEFT) {
             result = result | ZONE_L;
         }
     } else /*if(x > ANALOG_DEAD_MAX)*/ {
-        if(y < ANALOG_DEAD_MIN) {
+        if(y < ANALOG_DEAD_MIN && radSquared >= MELEE_RAD_SDI) {
             result = result | ZONE_D | ZONE_R;
-        } else if(y > ANALOG_DEAD_MAX) {
+        } else if(y > ANALOG_DEAD_MAX && radSquared >= MELEE_RAD_SDI) {
             result = result | ZONE_U | ZONE_R;
         } else if(x >= ANALOG_SDI_RIGHT) {
             result = result | ZONE_R;
