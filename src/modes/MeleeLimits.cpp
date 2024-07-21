@@ -14,7 +14,7 @@
 #define ANALOG_DASH_RIGHT (128+64)/*this x coordinate will dash right*/
 #define ANALOG_SDI_LEFT (128-56)/*this x coordinate will sdi left*/
 #define ANALOG_SDI_RIGHT (128+56)/*this x coordinate will sdi right*/
-#define MELEE_SDI_RAD 3136/* if x^2+y^2 >= this, it's diagonal SDI
+#define MELEE_SDI_RAD 3136/* if x^2+y^2 >= this, it's diagonal SDI*/
 #define MELEE_RIM_RAD1 6185/*if x^2+y^2 >= this, it's on the rim and 6ms*/
 #define MELEE_RIM_RAD2 6858/*if x^2+y^2 >= this, it's past the rim and 7ms*/
 #define MELEE_RIM_RAD3 8979/*if x^2+y^2 >= this, it's past the rim and 8ms*/
@@ -24,7 +24,7 @@
 #define TRAVELTIME_EASY3 8//ms for 112+cubic it takes 83% to get to dash, for 80+linear it takes 80% to get to dash
 #define TRAVELTIME_CROSS 12//ms to cross gate; unused
 #define TRAVELTIME_INTERNAL 12//ms for "easy" to "internal"; 2/3 frame
-#define TRAVELTIME_SLOW (4*16)//ms for tap SDI nerfing, 4 frames
+#define TRAVELTIME_SLOW (5.5*16)//ms for tap SDI nerfing, 4 frames
 
 #define TIMELIMIT_DOWNUP (16*3*250)//units of 4us; how long after a crouch to upward input should it begin a jump?
 #define JUMP_TIME (16*2*250)//units of 4us; after a recent crouch to upward input, always hold full up for 2 frames
@@ -176,17 +176,17 @@ uint8_t sdiZone(const uint8_t x, const uint8_t y) {
             result = result | ZONE_U;
         }
     } else if(x < ANALOG_DEAD_MIN) {
-        if(y < ANALOG_DEAD_MIN && radSquared >= MELEE_RAD_SDI) {
+        if(y < ANALOG_DEAD_MIN && radSquared >= MELEE_SDI_RAD) {
             result = result | ZONE_D | ZONE_L;
-        } else if(y > ANALOG_DEAD_MAX && radSquared >= MELEE_RAD_SDI) {
+        } else if(y > ANALOG_DEAD_MAX && radSquared >= MELEE_SDI_RAD) {
             result = result | ZONE_U | ZONE_L;
         } else if(x <= ANALOG_SDI_LEFT) {
             result = result | ZONE_L;
         }
     } else /*if(x > ANALOG_DEAD_MAX)*/ {
-        if(y < ANALOG_DEAD_MIN && radSquared >= MELEE_RAD_SDI) {
+        if(y < ANALOG_DEAD_MIN && radSquared >= MELEE_SDI_RAD) {
             result = result | ZONE_D | ZONE_R;
-        } else if(y > ANALOG_DEAD_MAX && radSquared >= MELEE_RAD_SDI) {
+        } else if(y > ANALOG_DEAD_MAX && radSquared >= MELEE_SDI_RAD) {
             result = result | ZONE_U | ZONE_R;
         } else if(x >= ANALOG_SDI_RIGHT) {
             result = result | ZONE_R;
@@ -258,7 +258,7 @@ uint8_t isTapSDI(const sdizonestate zoneHistory[HISTORYLEN],
         //const uint16_t timeDiff2 = (timeList[0] - timeList[1])*sampleSpacing;//rising to falling, or falling to rising
         //We want to nerf it if there is more than one press every 6 frames, but not if the previous press or release duration is less than 1 frame
         if(!staleList[3] && (timeDiff0 < TIMELIMIT_TAP_PLUS && timeDiff1 < TIMELIMIT_TAP && timeDiff0 > TIMELIMIT_DEBOUNCE)) {
-            if((zoneList[0] == 0) || (zoneList[1] == 0)) {//if one of the pairs of zones is zero, it's tapping a cardinal
+            if((zoneList[0] == 0) || (zoneList[1] == 0)) {//if one of the pairs of zones is zero, it's tapping a cardinal (or tapping a diagonal modifier)
                 output = output | BITS_SDI_TAP_CARD;
             } else if(popCur+popOne == 3) { //one is cardinal and the other is diagonal
                 output = output | BITS_SDI_TAP_DIAG;
@@ -562,14 +562,21 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
         const uint16_t xInMag = xIn > ANALOG_STICK_NEUTRAL ? xIn - ANALOG_STICK_NEUTRAL : ANALOG_STICK_NEUTRAL - xIn;
         const uint16_t yInMag = yIn > ANALOG_STICK_NEUTRAL ? yIn - ANALOG_STICK_NEUTRAL : ANALOG_STICK_NEUTRAL - yIn;
 
+        //calculate radius (squared)
+        const uint16_t xsquared = xInMag*xInMag;
+        const uint16_t ysquared = yInMag*yInMag;
+        const uint16_t radSquared = xsquared+ysquared;
+
         //if the coordinates changed
         if(aHistory[currentIndexA].x != rawOutputIn.leftStickX || aHistory[currentIndexA].y != rawOutputIn.leftStickY) {
             //if the angle moved, check whether the currently requested angle is too shallow
             //if so, nerf it, regardless of whether it was nerfed before.
             if(((yInMag * 157 < xInMag * 80) || (xInMag * 157 < yInMag * 80)) && xInMag && yInMag) { //157 and 80 are the closest ratio to 27 degrees (27.0013)
                 //the closest coordinate inside the melee unit circle to 27 degrees is 51 and 26 (27.0127)
-                const uint8_t xWavedash = xInMag > yInMag ? 51 : 26;
-                const uint8_t yWavedash = yInMag > xInMag ? 51 : 26;
+                const uint8_t longCoord  = radSquared > 5625 ? 70 : 51;
+                const uint8_t shortCoord = radSquared > 5625 ? 36 : 26;
+                const uint8_t xWavedash = xInMag > yInMag ? longCoord : shortCoord;
+                const uint8_t yWavedash = yInMag > xInMag ? longCoord : shortCoord;
                 //overwrite with a nerfed angle
                 if(xIn < ANALOG_STICK_NEUTRAL) {
                     x_end = ANALOG_STICK_NEUTRAL - xWavedash;

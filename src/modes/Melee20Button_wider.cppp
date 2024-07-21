@@ -96,10 +96,17 @@ void Melee20Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
             outputs.leftStickY = 128 + (directions.y * 42);
         }
         if (directions.diagonal && shield_button_pressed) {
-            // MX + L, R, LS, and MS + q1/2/3/4:
-            // 6750 3125 - 24.84deg - 54 25 (will be overridden for LR digital)
-            outputs.leftStickX = 128 + (directions.x * 54);
-            outputs.leftStickY = 128 + (directions.y * 25);
+            if (!inputs.b) {
+                // MX + L, R, LS, and MS + q1/2/3/4:
+                // 6750 3125 - 24.84deg - 54 25 (will be overridden for LR digital)
+                outputs.leftStickX = 128 + (directions.x * 54);
+                outputs.leftStickY = 128 + (directions.y * 25);
+            } else {
+                /* Extended angle to have magnitude similarity for DI */
+                // 9000 4250 - 25.28deg - 72 34 (will be overriden for LR digital but remain rim)
+                outputs.leftStickX = 128 + (directions.x * 72);
+                outputs.leftStickY = 128 + (directions.y * 34);
+            }
         }
 
         /* Up B angles */
