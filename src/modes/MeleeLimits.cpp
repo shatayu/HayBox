@@ -946,7 +946,7 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
 
             uint8_t xInRand = xIn;
             uint8_t yInRand = yIn;
-//            randomizeCoord(xInRand, yInRand, currentTime);
+            randomizeCoord(xInRand, yInRand, currentTime);
 
             aHistory[currentIndexA].timestamp = currentTime;
             aHistory[currentIndexA].x = xIn;
