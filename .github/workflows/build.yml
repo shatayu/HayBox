@@ -12,14 +12,14 @@ jobs:
     strategy:
         matrix:
           include:
-            - env: c53
-              bin_ext: uf2
-            - env: pico
-              bin_ext: uf2
-            - env: rana_digital
-              bin_ext: uf2
-            - env: b0xx_r4
-              bin_ext: uf2
+#            - env: c53
+#              bin_ext: uf2
+#            - env: pico
+#              bin_ext: uf2
+#            - env: rana_digital
+#              bin_ext: uf2
+#            - env: b0xx_r4
+#              bin_ext: uf2
             - env: arduino_uno
               bin_ext: hex
             - env: arduino_nano
