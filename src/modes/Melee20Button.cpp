@@ -1,6 +1,6 @@
 #include "modes/Melee20Button.hpp"
 
-//wider wavedash angle
+//legacy modx wavedash angle
 
 #define ANALOG_STICK_MIN 48
 #define ANALOG_STICK_NEUTRAL 128
@@ -98,14 +98,14 @@ void Melee20Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
         if (directions.diagonal && shield_button_pressed) {
             if (!inputs.b) {
                 // MX + L, R, LS, and MS + q1/2/3/4:
-                // 6750 3125 - 24.84deg - 54 25 (will be overridden for LR digital)
-                outputs.leftStickX = 128 + (directions.x * 54);
-                outputs.leftStickY = 128 + (directions.y * 25);
+                // 6375 3750 - 30.47 deg - 51 30
+                outputs.leftStickX = 128 + (directions.x * 51);
+                outputs.leftStickY = 128 + (directions.y * 30);
             } else {
-                /* Extended angle to have magnitude similarity for DI */
-                // 9000 4250 - 25.28deg - 72 34 (will be overriden for LR digital but remain rim)
-                outputs.leftStickX = 128 + (directions.x * 72);
-                outputs.leftStickY = 128 + (directions.y * 34);
+                // Extended angle to have magnitude similarity for DI
+                // 8500 5125 - 31.09 deg - 68 41
+                outputs.leftStickX = 128 + (directions.x * 68);
+                outputs.leftStickY = 128 + (directions.y * 41);
             }
         }
 
@@ -146,7 +146,7 @@ void Melee20Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
                 outputs.leftStickY = 128 + (directions.y * 31);
                 if (inputs.c_down) {
                     outputs.leftStickX = 128 + (directions.x * 70);
-                    outputs.leftStickY = 128 + (directions.y * 38);
+                    outputs.leftStickY = 128 + (directions.y * 36);
                 }
                 if (inputs.c_left) {
                     outputs.leftStickX = 128 + (directions.x * 68);
@@ -184,9 +184,19 @@ void Melee20Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
         if (directions.vertical) {
             outputs.leftStickY = 128 + (directions.y * 59);
         }
+        if (directions.diagonal && shield_button_pressed) {
+            // MY + L, R, LS, and MS + q1/2 = 4750 8750 = 38 70
+            outputs.leftStickX = 128 + (directions.x * 38);
+            outputs.leftStickY = 128 + (directions.y * 70);
+            // MY + L, R, LS, and MS + q3/4 = 5000 8500 = 40 68
+            if (directions.y == -1) {
+                outputs.leftStickX = 128 + (directions.x * 40);
+                outputs.leftStickY = 128 + (directions.y * 68);
+            }
+        }
 
         /* Up B angles */
-        if (directions.diagonal) {
+        if (directions.diagonal && !shield_button_pressed) {
             if (!inputs.b) {
                 // 3250 7625 - 23.09deg - 26 61 - modY
                 // 3625 7000 - 27.38deg - 29 56 - modY + cDown
