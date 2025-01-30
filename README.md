@@ -1,90 +1,23 @@
 # HayBox Limited Edition
 
-This is a firmware designed for experimenting with travel time and other subframe nerfs for Melee based on Haystack's HayBox.
+This is a firmware designed to comply with the proposed controller ruleset for Melee based on Haystack's HayBox.
 
-We believe that digital controllers, when used for Melee, are a little overtuned relative to GCC.
-
-Our goal is to make it so that box users and GCC users have a level playing field without doing this by buffing custom motherboard GCCs to the level of boxes, so that the barrier to entry for new players isn't a PhobGCC or a rectangle, or by changing the game to be significantly easier than it currently is.
-
-Particular strengths of rectangle controllers we had in mind when designing the initial set of nerfs:
-
-* Dashdancing: GCC players perceive that it's more difficult to hit a dashdancing box player because of their increased ability to react to a threat and dash away.
-* SDI: While GCCs can produce tremendous sustained SDI using the "wank" technique, boxes have much more consistency for short SDI windows and we want to reduce their ability to produce many SDI inputs in a very short time.
-  * Note: it will probably never be possible to make it more difficult to do two consecutive SDI inputs on a box.
-* Pivot tilts: While empty pivoting is somewhat less consistent on rectangles, they are able to pinpoint tilt inputs after an empty pivot much more quickly and consistently than a GCC player can reasonably do without overshooting.
-* Crouch uptilts: Reactionary crouching uptilts and run cancel uptilts, both strong options, are significantly easier on rectangles than on stick because a fast stick motion is likely to overshoot and result in an upsmash or tap jump.
-
-Current nerfs (**SUBJECT TO CHANGE**)
-
-* Neutral SOCD
-  * Neutral SOCD helps mitigate easy three-consecutive-input SDI, though not completely.
-  * Neutral SOCD also helps make long-distance dashdancing a little riskier, because there are two motions required to turn around when you want to change direction. Thus you have an increased risk of getting stuck in a skidding turnaround when you try to turn around right at the end of initial dash. Alternatively, you can release the forward direction early, but that sacrifices distance.
-  * Many consider this to be slightly better than 2ip no-reactivation for controlling aerial drift, because you can never lock yourself out of drift.
-  * It affects away-then-in ledgedashes, making them much harder to be frame-perfect similar to on sticks.
-    * However, it is pointed out that c-stick ledgedrops still exist, just people would need to practice them (and they may be less ergonomic on rectangles with large button spacing).
-    * Some players, depending on the character, want wider ModX wavedash angles to make held-modX down-then-in ledgedashes have the same timing. Is this just Fox?
-  * However, it is generally riskier for vertical recovery mixups like fastfall up-b.
-  * Additionally, if you're not used to lifting fingers up it may take time to get used to.
-  * Will we stick with this? There are potential alternatives that have been suggested, though they are significantly harder to implement:
-    * 2ip no reactivation that has significantly increased travel time when both directions are pressed
-    * 2ip no reactivation vertically, but not horizontally. (possibly with the above); this would need an additional SDI nerf similar to the B0XX ones.
-* Left stick travel time to the center or diagonal rim coordinates: 6ms (just over 1/3 frame)
-  * Travel time exists to add some reaction time parity between sticks and buttons, and to also make digital inputs subject to at least some of the same polling timing considerations as sticks.
-  * This value is based off measured center-to-rim stick speeds from various players, as well as a little bit of rectangle testing before where a player remarked that even slightly longer travel time felt worse.
-  * Because the travel is linear, this delays inputs by 3 ms on average, but it may be slightly more depending on where the threshold is along the travel distance. For dashdancing turnarounds, this is more like a 5ms delay, but for dashing from standing it's more like 2ms.
-* ~~Left stick movements to rim coordinates delayed by 4ms (1/4 frame).~~
-  * This removes the risk of polling errors for rising edges but slightly slows reaction time.
-* Left stick travel time to ~~non-center~~ non-cardinal or diagonal rim coordinates including the center: 12ms (2/3 frame)
-  * This is longer than the rim travel times because it takes longer, on a stick, to pinpoint a non-rim position.
-  * This used to be 16 ms, a whole frame, but users noted that it made timing button inputs for tilts harder. On a stick, even if it takes longer to get to a tilt location, you get feedback from your senses of when the motion is completed, but that's not true of button presses with simulated travel time.
-* 4 frame travel time for cardinal tapping SDI (numpad notation: 5656...) faster than 10 presses/s, but not for taps shorter than half a frame for switch bounce leniency.
-  * This is implemented because with neutral SOCD it's relatively easy to get double-rate mashing. To mash right with one full cycle per press AND per release, press right, press left, release left, release right (and repeat).
-  * By merely increasing the travel time and not locking out, this mitigates SDI without significantly affecting aerial drift control via rapid tapping.
-  * We need to do SDI testing to check whether this is needed at all for short SDI windows (Fox upair 1) and whether it can achieve more distance than wank SDI on long SDI windows (knee).
-* ~~Lockout for diagonal tapping SDI (numpad notation: 636**3**...) faster than 10 presses/s (6f)~~ Currently Disabled
-  * This was implemented for the same reasons as cardinal tap SDI.
-  * However, at the moment it's disabled because it affects shield drop fastfall.
-  * We would like users to test whether abusing diagonal tap SDI is noticeably impactful in game.
-  * In the future this may be re-enabled with a different time window.
-* Lockout for cardinal + diagonal tapping SDI (numpad notation: 56356**3**) faster than 7.5 presses/s (5.5f)
-  * The last remaining SDI method gets you a cardinal and a diagonal SDI pulse for every press, by plinking two adjacent cardinals.
-  * This is basically repeated quarter-circle SDI in a way that's not really doable on a stick.
-  * It is occasionally impactful in game: one person reported that their ledgedash technique, which involves dropping from ledge with down then in, releasing, and pressing diagonal again to airdodge, was impacted.
-* Lockout for cardinal-diagonal-opposite diagonal (numpad notation: 563**9**) with less than 5.5 frames between cardinal and second diagonal.
-  * Even with neutral SOCD it's not too hard to get three consecutive SDI inputs without this.
-* Moving from a crouching coordinate to an upward tilt in < 3 frames will move the stick to a tap jump coordinate
-  * This prevents users from continuously holding crouch and uptilting on reaction in a single motion.
-  * Additionally, it affects the speed of run cancel uptilt.
-  * Neutral SOCD does not compound with this: time spent in neutral counts towards the two frames you have to wait.
-  * This is a fairly non-controversial new nerf, because it's something that is a strong option in game that is extremely difficult to execute on a stick.
-  * The 3 frame window was initially determined by asking top GCC controller modders what they thought would be a reasonable limit.
-  * In early testing, players have said that it feels reasonable. The limit is easy enough to avoid but at the same time holds back degenerate options.
-  * NOTE: earlier this said 2 frames. I checked the code and it had been 3 frames all along.
-* Tilt stick inputs less than 8.0 frames after an empty pivot will move the stick to a smash coordinate.
-  * This detects an empty pivot that is >50% probability of success: a 0.5 to 1.5 frame tap opposite of the last direction pressed.
-  * Any upward or downward tilt input becomes full magnitude, as long as < 8 frames have elapsed since the empty pivot.
-  * This corresponds with the difficulty of controlling the stick after an empty pivot movement.
-  * For upward directions, a minimum angle of 45 degrees is enforced to prevent up-angled ftilt and produce a tap jump regardless of the original angle. Otherwise, it attempts to preserve the angle so wavedashes are not randomly affected.
+Downloads are available at https://github.com/CarVac/HayBox/releases.
 
 In addition to nerfs, it offers several features:
 
 Arduino-based boxes will work at the same latency regardless of polling rate, as long as the poll spacing is constant.
 Users no longer need to hold A on plugin to optimize latency on console, and it'll have slightly less lag on adapters.
 
-Instead, the A press on plugin disables all timing based nerfs.
-
 Additionally, you can hold B on plugin to get the shorter recovery coordinates that all have magnitudes about 0.8, for use with teleport recovery characters, and you can hold Down on plugin to get the crouch-walk option select.
 
 It also currently has built-in support for a handful more boards than mainline Haybox, notably B0XX R4, Htangl, and Rana Digital.
 
-Limitations: Any console polling that does not have uniform space between polls will trip up the connection. Notably, the Homebrew Menu, Nintendont, SmashScope on console, and third-party GCC to USB adapters can work either poorly or not at all.
+Limitations: Any console polling that does not have uniform space between polls will trip up the connection on AVR. Notably, the Homebrew Menu, Nintendont, SmashScope on console, and third-party GCC to USB adapters can work either poorly or not at all.
 
 # HayBox
 
 HayBox is a modular, cross-platform firmware for digital or mixed analog/digital controllers, primarily targeted at [B0XX](https://b0xx.com)-style controllers.
-
-[![GitHub issues](https://img.shields.io/github/issues/JonnyHaystack/HayBox)](https://github.com/JonnyHaystack/HayBox/issues)
-[![GitHub pull requests](https://img.shields.io/github/issues-pr/JonnyHaystack/HayBox)](https://github.com/JonnyHaystack/HayBox/pulls)
 
 ## Table of Contents
 
