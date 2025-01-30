@@ -58,7 +58,7 @@ enum travelType{T_Lin, T_Quad, T_Cubic, T_Quart, T_Delay};
 #define ZONE_L   0b0000'0100
 #define ZONE_R   0b0000'1000
 
-#define BITS_SDI      0b1111'0000
+#define BITS_SDI          0b1111'0000
 #define BITS_SDI_WANK     0b0001'0000
 #define BITS_SDI_TAP_CARD 0b0010'0000
 #define BITS_SDI_TAP_DIAG 0b0100'0000
@@ -339,6 +339,24 @@ uint8_t isTapSDI(const sdizonestate zoneHistory[HISTORYLEN],
         //                                                            within the time limit
         if(adjacentDiag && origCount && cardCount && diagCount > 1 && shortTime) {
             output = output | BITS_SDI_WANK;
+        }
+    }
+
+    //wank sdi around a diagonal
+    //7 8 9
+    //4 5 6
+    //1 2 3
+    //
+    //this would be 4 7 8 7 type deal
+
+    //first check if another one isn't already triggered
+    if(!output) {
+        //were there two of the same diagonal on alternating inputs?
+        if((zoneList[0] == zoneList[2]) && (popcount_zone(zoneList[0]) == 2)) {
+            //check duration
+            if((timeList[0] - timeList[2])*sampleSpacing < TIMELIMIT_WANK && !staleList[2]) {
+                output = output | BITS_SDI_WANK;
+            }
         }
     }
 
