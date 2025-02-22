@@ -355,7 +355,7 @@ uint8_t isTapSDI(const sdizonestate zoneHistory[HISTORYLEN],
         if((zoneList[0] == zoneList[2]) && (popcount_zone(zoneList[0]) == 2)) {
             //check duration
             if((timeList[0] - timeList[2])*sampleSpacing < TIMELIMIT_WANK && !staleList[2]) {
-                output = output | BITS_SDI_WANK;
+                output = output | BITS_SDI_WANK | BITS_SDI_TAP_CRDG;
             }
         }
     }
@@ -891,6 +891,15 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
             //aHistory[currentIndexA].y_end = prelimAY;
             sdiIsNerfed = true;
         }//one or the other should occur
+        if((tapSDI & BITS_SDI_WANK) && (tapSDI & BITS_SDI_TAP_CRDG)) {
+            //this indicates that it was oscillating about a diagonal
+            //lock to neutral
+            prelimAX = ANALOG_STICK_NEUTRAL;
+            prelimAY = ANALOG_STICK_NEUTRAL;
+            aHistory[currentIndexA].x_end = prelimAX;
+            aHistory[currentIndexA].y_end = prelimAY;
+            sdiIsNerfed = true;
+        }
         //debug to see if SDI was detected
         /*
         if(tapSDI & BITS_SDI_TAP_CARD) {
