@@ -257,7 +257,7 @@ uint8_t isTapSDI(const sdizonestate zoneHistory[HISTORYLEN],
         const uint16_t timeDiff1 = (timeList[0] - timeList[2])*sampleSpacing;//rising edge to rising edge, or falling edge to falling edge
         //const uint16_t timeDiff2 = (timeList[0] - timeList[1])*sampleSpacing;//rising to falling, or falling to rising
         //We want to nerf it if there is more than one press every 6 frames, but not if the previous press or release duration is less than 1 frame
-        if(!staleList[3] && (timeDiff0 < TIMELIMIT_TAP_PLUS && timeDiff1 < TIMELIMIT_TAP && timeDiff0 > TIMELIMIT_DEBOUNCE)) {
+        if(!staleList[2] && (timeDiff0 < TIMELIMIT_TAP_PLUS && timeDiff1 < TIMELIMIT_TAP && timeDiff0 > TIMELIMIT_DEBOUNCE)) {
             if((zoneList[0] == 0) || (zoneList[1] == 0)) {//if one of the pairs of zones is zero, it's tapping a cardinal (or tapping a diagonal modifier)
                 output = output | BITS_SDI_TAP_CARD;
             } else {//if(popCur != 0 && popOne != 0) { //one is cardinal and the other is diagonal
