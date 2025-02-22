@@ -24,7 +24,8 @@
 #define TRAVELTIME_EASY3 8//ms for 112+cubic it takes 83% to get to dash, for 80+linear it takes 80% to get to dash
 #define TRAVELTIME_CROSS 12//ms to cross gate; unused
 #define TRAVELTIME_INTERNAL 12//ms for "easy" to "internal"; 2/3 frame
-#define TRAVELTIME_SLOW 88//(5.5*16)//ms for tap SDI nerfing, 5.5 frames
+//#define TRAVELTIME_SLOW 88//(5.5*16)//ms for tap SDI nerfing, 5.5 frames
+#define TRAVELTIME_SLOW 224//(14*16)//ms for tap SDI nerfing, makes the .2875 to 0.6875 take at least 4 frames with a 112 cardinal
 
 #define TIMELIMIT_DOWNUP (16*3*250)//units of 4us; how long after a crouch to upward input should it begin a jump?
 #define JUMP_TIME (16*2*250)//units of 4us; after a recent crouch to upward input, always hold full up for 2 frames
