@@ -49,6 +49,8 @@
 
 #define TIMELIMIT_PIVOTTILT 32000//(16*8*250)//units of 4us; 8 frames
 
+#define TIMELIMIT_SDI_COUNTDOWN 16000//(16*4*250)//units of 4us; 4 frames
+
 enum pivotdir{P_None, P_Leftright, P_Rightleft};
 enum travelType{T_Lin, T_Quad, T_Cubic, T_Quart, T_Delay};
 
@@ -717,6 +719,20 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
         aHistory[currentIndexA].tt = max(aHistory[currentIndexA].tt, TRAVELTIME_SLOW);
         delayType = T_Lin;
     }
+    //if oscillating about a diagonal
+    static uint16_t sdiCountdown = 0;
+    if((tapSDI & BITS_SDI_WANK) && (tapSDI & BITS_SDI_TAP_CRDG)) {
+        //both wank&cardiag indicates that it was oscillating about a diagonal
+        //new destinations will have 5.5 frame travel time for a duration of 4 frames from the last sdi detection event
+        sdiCountdown = TIMELIMIT_SDI_COUNTDOWN;
+        //prelimCX = ANALOG_STICK_NEUTRAL - 50;
+    }
+    if(sdiCountdown > sampleSpacing) {
+        sdiCountdown = sdiCountdown - sampleSpacing;
+        aHistory[currentIndexA].tt = max(aHistory[currentIndexA].tt, TRAVELTIME_SLOW);
+    } else {
+        sdiCountdown = 0;
+    }
 
     travelTimeCalc(currentTime,
                    aHistory[currentIndexA].timestamp,
@@ -803,11 +819,13 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
     //if it's a downtilt coordinate...
     bool pivotTilt = false;
     bool upTilt = false;
-    if(direction != P_None && prelimAY < ANALOG_DEAD_MIN) {
+    //if(direction != P_None && prelimAY < ANALOG_DEAD_MIN) {
+    if(direction != P_None && aHistory[currentIndexA].y_end < ANALOG_DEAD_MIN) {
         pivotTilt = true;
     }
     //if it's a uptilt coordinate...
-    if(direction != P_None && prelimAY > ANALOG_DEAD_MAX) {
+    //if(direction != P_None && prelimAY > ANALOG_DEAD_MAX) {
+    if(direction != P_None && aHistory[currentIndexA].y_end > ANALOG_DEAD_MAX) {
         pivotTilt = true;
         upTilt = true;
     }
@@ -830,10 +848,11 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
             prelimAY = ANALOG_STICK_NEUTRAL + yCoord * stretchMult / 2;
         }
         if(upTilt && timeSinceNotUptilt > TIMELIMIT_TAPSHUTOFF) {
+            //the x direction got flipped to avoid affecting diagonals
             if(direction == P_Leftright) {
-                prelimAX = ANALOG_STICK_NEUTRAL - 30;
-            } else if(direction == P_Rightleft) {
                 prelimAX = ANALOG_STICK_NEUTRAL + 30;
+            } else if(direction == P_Rightleft) {
+                prelimAX = ANALOG_STICK_NEUTRAL - 30;
             }
             prelimAY = ANALOG_STICK_NEUTRAL +30;
         }
@@ -879,6 +898,7 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
             //make sure that future cardinal travel time begins where it was before
             //aHistory[currentIndexA].x_end = prelimAX;
             sdiIsNerfed = true;
+            //prelimCX = ANALOG_STICK_NEUTRAL + 50;
         } else if(tapSDI & (ZONE_U | ZONE_D)) {
             //lock the cross axis
             prelimAX = ANALOG_STICK_NEUTRAL;
@@ -890,26 +910,18 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
             //make sure that future cardinal travel time begins where it was before
             //aHistory[currentIndexA].y_end = prelimAY;
             sdiIsNerfed = true;
+            //prelimCX = ANALOG_STICK_NEUTRAL - 50;
         }//one or the other should occur
-        if((tapSDI & BITS_SDI_WANK) && (tapSDI & BITS_SDI_TAP_CRDG)) {
-            //this indicates that it was oscillating about a diagonal
-            //lock to neutral
-            prelimAX = ANALOG_STICK_NEUTRAL;
-            prelimAY = ANALOG_STICK_NEUTRAL;
-            aHistory[currentIndexA].x_end = prelimAX;
-            aHistory[currentIndexA].y_end = prelimAY;
-            sdiIsNerfed = true;
-        }
         //debug to see if SDI was detected
         /*
         if(tapSDI & BITS_SDI_TAP_CARD) {
-            prelimCX = 200;
+            prelimCY = ANALOG_STICK_NEUTRAL + 50;
         }
         if(tapSDI & BITS_SDI_TAP_CRDG) {
-            prelimCY = 200;
+            prelimCY = ANALOG_STICK_NEUTRAL - 50;
         }
         if(tapSDI & BITS_SDI_WANK) {
-            prelimCX = 10;
+            prelimCY = ANALOG_STICK_NEUTRAL + 120;
         }
         */
     } else if(sdiIsNerfed) {
