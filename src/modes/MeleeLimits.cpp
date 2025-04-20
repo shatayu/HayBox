@@ -14,6 +14,8 @@
 #define ANALOG_DASH_RIGHT (128+64)/*this x coordinate will dash right*/
 #define ANALOG_SDI_LEFT (128-56)/*this x coordinate will sdi left*/
 #define ANALOG_SDI_RIGHT (128+56)/*this x coordinate will sdi right*/
+#define ANALOG_UTILT_LEFT (128-44)/*this y coordinate will never uptilt*/
+#define ANALOG_UTILT_RIGHT (128+44)/*this y coordinate will never uptilt*/
 #define MELEE_SDI_RAD 3136/* if x^2+y^2 >= this, it's diagonal SDI*/
 #define MELEE_RIM_RAD1 6185/*if x^2+y^2 >= this, it's on the rim and 6ms*/
 #define MELEE_RIM_RAD2 6858/*if x^2+y^2 >= this, it's past the rim and 7ms*/
@@ -871,7 +873,12 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
 
     //increment timeSinceJump unless you want to trigger a jump
     timeSinceJump = min(timeSinceJump+1, 100);
-    if(timeSinceCrouch*sampleSpacing < TIMELIMIT_DOWNUP && prelimAY > ANALOG_DEAD_MAX && prelimAY < ANALOG_TAPJUMP && !downUpJumping) {
+    if(timeSinceCrouch*sampleSpacing < TIMELIMIT_DOWNUP
+        && prelimAY > ANALOG_DEAD_MAX
+        && prelimAY < ANALOG_TAPJUMP
+        && prelimAX > ANALOG_UTILT_LEFT
+        && prelimAX < ANALOG_UTILT_RIGHT
+        && !downUpJumping) {
         downUpJumping = true;
         timeSinceJump = 0;
     }
