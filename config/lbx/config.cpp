@@ -85,7 +85,7 @@ void setup() {
 
     // Hold B on plugin for Brook board mode.
     pinMode(pinout.mux, OUTPUT);
-    if (button_holds.b && button_holds.r) {
+    if (button_holds.b) {
         digitalWrite(pinout.mux, HIGH);
         brook_mode = true;
         return;
@@ -134,9 +134,9 @@ void setup() {
     }
 
     bool use_teleport = false;
-    if (button_holds.b) {
-        use_teleport = true;
-    }
+    //if (button_holds.b) {
+    //    use_teleport = true;
+    //}
 
     bool use_crouchwalk = false;
     if (button_holds.down) {
