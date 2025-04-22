@@ -852,11 +852,11 @@ void limitOutputs(const uint16_t sampleSpacing,//in units of 4us
         if(upTilt && timeSinceNotUptilt > TIMELIMIT_TAPSHUTOFF) {
             //the x direction got flipped to avoid affecting diagonals
             if(direction == P_Leftright) {
-                prelimAX = ANALOG_STICK_NEUTRAL + 30;
+                prelimAX = ANALOG_STICK_NEUTRAL + 56;
             } else if(direction == P_Rightleft) {
-                prelimAX = ANALOG_STICK_NEUTRAL - 30;
+                prelimAX = ANALOG_STICK_NEUTRAL - 56;
             }
-            prelimAY = ANALOG_STICK_NEUTRAL +30;
+            prelimAY = ANALOG_STICK_NEUTRAL + 56;
         }
     }
 
