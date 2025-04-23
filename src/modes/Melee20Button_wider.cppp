@@ -146,7 +146,7 @@ void Melee20Button::UpdateAnalogOutputs(InputState &inputs, OutputState &outputs
                 outputs.leftStickY = 128 + (directions.y * 31);
                 if (inputs.c_down) {
                     outputs.leftStickX = 128 + (directions.x * 70);
-                    outputs.leftStickY = 128 + (directions.y * 38);
+                    outputs.leftStickY = 128 + (directions.y * 36);
                 }
                 if (inputs.c_left) {
                     outputs.leftStickX = 128 + (directions.x * 68);
