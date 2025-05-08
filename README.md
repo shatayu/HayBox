@@ -19,6 +19,17 @@ Limitations: Any console polling that does not have uniform space between polls 
 
 HayBox is a modular, cross-platform firmware for digital or mixed analog/digital controllers, primarily targeted at [B0XX](https://b0xx.com)-style controllers.
 
+## Shatayu's Changes
+* Changed pins in `arduino_nativeusb/config.cpp` to work with R3 B0XX
+
+## Shatayu's Notes
+* To build, open this repository in VSCode Windows
+* Plug in B0XX via USB-C to USB-A cable holding Start + C-Down
+* Have the PlatformIO extension
+* Set the build environment to `env:arduino_leonardo`
+* Hit "Build" to confirm everything is good
+* Hit "Upload" to send to B0XX
+
 ## Table of Contents
 
 * [Features](#features)
