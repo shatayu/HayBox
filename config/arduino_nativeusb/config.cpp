@@ -20,33 +20,33 @@ KeyboardMode *current_kb_mode = nullptr;
 
 // Customise this to match your controller's pinout.
 GpioButtonMapping button_mappings[] = {
-    {&InputState::l,            15},
-    { &InputState::left,        16},
-    { &InputState::down,        14},
-    { &InputState::right,       1 },
+    {&InputState::l,            9 },
+    { &InputState::left,        15},
+    { &InputState::down,        16},
+    { &InputState::right,       14},
 
-    { &InputState::mod_x,       12},
-    { &InputState::mod_y,       0 },
+    { &InputState::mod_x,       8 },
+    { &InputState::mod_y,       6 },
 
     { &InputState::select,      2 },
-    { &InputState::start,       4 },
+    { &InputState::start,       12 },
     { &InputState::home,        3 },
 
-    { &InputState::c_left,      8 },
-    { &InputState::c_up,        10},
-    { &InputState::c_down,      6 },
-    { &InputState::a,           9 },
-    { &InputState::c_right,     5 },
+    { &InputState::c_left,      A1},
+    { &InputState::c_up,        A2},
+    { &InputState::c_down,      5 },
+    { &InputState::a,           13},
+    { &InputState::c_right,     A0},
 
-    { &InputState::b,           A2},
-    { &InputState::x,           A1},
-    { &InputState::z,           A0},
-    { &InputState::up,          13},
+    { &InputState::b,           4 },
+    { &InputState::x,           A5},
+    { &InputState::z,           A4},
+    { &InputState::up,          A3},
 
-    { &InputState::r,           7 },
-    { &InputState::y,           A5},
-    { &InputState::lightshield, A4},
-    { &InputState::midshield,   A3},
+    { &InputState::r,           0},
+    { &InputState::y,           1 },
+    { &InputState::lightshield, 10},
+    { &InputState::midshield,   11},
 };
 size_t button_count = sizeof(button_mappings) / sizeof(GpioButtonMapping);
 
